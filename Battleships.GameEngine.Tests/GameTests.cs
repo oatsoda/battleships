@@ -1,6 +1,7 @@
 using System;
 using System.Drawing;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Battleships.GameEngine.Tests
 {
@@ -43,24 +44,30 @@ namespace Battleships.GameEngine.Tests
         public static SetupBoard CreateValidSetupBoard()
         {
             var setupBoard = new SetupBoard();
-            setupBoard.AddShip(CreateValidShipOfLength(2));
-            setupBoard.AddShip(CreateValidShipOfLength(3));
-            setupBoard.AddShip(CreateValidShipOfLength(3));
-            setupBoard.AddShip(CreateValidShipOfLength(4));
-            setupBoard.AddShip(CreateValidShipOfLength(5));
+            setupBoard.AddShip(new Ship("A0", "A1"));
+            setupBoard.AddShip(new Ship("B0", "B2"));
+            setupBoard.AddShip(new Ship("C0", "C2"));
+            setupBoard.AddShip(new Ship("D0", "D3"));
+            setupBoard.AddShip(new Ship("E0", "E4"));
             Assert.True(setupBoard.IsValid);
             return setupBoard;
         }
 
-        public static Ship CreateValidShipOfLength(int length)
-        {
-            return new Ship(new Point(0, 0), new Point(0, length));
+        public static Ship CreateValidShipOfLength(int length, int putOnCol = 0)
+            {return new Ship($"{(char)(65+putOnCol)}0", $"{(char)(65+putOnCol)}{length-1}");
         }
     }
 
 
     public class SetupBoardTests
     {
+        private readonly ITestOutputHelper m_Output;
+
+        public SetupBoardTests(ITestOutputHelper output)
+        {
+            m_Output = output;
+        }
+
         [Fact]
         public void SetupBoardDefaultsInvalid()
         {
@@ -78,10 +85,10 @@ namespace Battleships.GameEngine.Tests
             var setupBoard = new SetupBoard();
 
             // When
-            setupBoard.AddShip(TestData.CreateValidShipOfLength(2));
-            setupBoard.AddShip(TestData.CreateValidShipOfLength(3));
-            setupBoard.AddShip(TestData.CreateValidShipOfLength(3));
-            setupBoard.AddShip(TestData.CreateValidShipOfLength(4));
+            setupBoard.AddShip(TestData.CreateValidShipOfLength(2, 0));
+            setupBoard.AddShip(TestData.CreateValidShipOfLength(3, 1));
+            setupBoard.AddShip(TestData.CreateValidShipOfLength(3, 2));
+            setupBoard.AddShip(TestData.CreateValidShipOfLength(4, 3));
             
             // Then
             Assert.False(setupBoard.IsValid);
@@ -94,14 +101,17 @@ namespace Battleships.GameEngine.Tests
             var setupBoard = new SetupBoard();
 
             // When
-            setupBoard.AddShip(TestData.CreateValidShipOfLength(2));
-            setupBoard.AddShip(TestData.CreateValidShipOfLength(3));
-            setupBoard.AddShip(TestData.CreateValidShipOfLength(3));
-            setupBoard.AddShip(TestData.CreateValidShipOfLength(4));
-            setupBoard.AddShip(TestData.CreateValidShipOfLength(5));
+            setupBoard.AddShip(TestData.CreateValidShipOfLength(2, 0));
+            setupBoard.AddShip(TestData.CreateValidShipOfLength(3, 1));
+            setupBoard.AddShip(TestData.CreateValidShipOfLength(3, 2));
+            setupBoard.AddShip(TestData.CreateValidShipOfLength(4, 3));
+            setupBoard.AddShip(TestData.CreateValidShipOfLength(5, 4));
             
             // Then
             Assert.True(setupBoard.IsValid);
+
+            setupBoard.OccupationPoints.ForEach(p => m_Output.WriteLine(p.ToString()));
+
         }
 
         [Theory]
@@ -113,18 +123,35 @@ namespace Battleships.GameEngine.Tests
         {
             // Given            
             var setupBoard = new SetupBoard();
-            setupBoard.AddShip(TestData.CreateValidShipOfLength(2));
-            setupBoard.AddShip(TestData.CreateValidShipOfLength(3));
-            setupBoard.AddShip(TestData.CreateValidShipOfLength(3));
-            setupBoard.AddShip(TestData.CreateValidShipOfLength(4));
-            setupBoard.AddShip(TestData.CreateValidShipOfLength(5));
+            setupBoard.AddShip(new Ship("A0", "A1"));
+            setupBoard.AddShip(new Ship("B0", "B2"));
+            setupBoard.AddShip(new Ship("C0", "C2"));
+            setupBoard.AddShip(new Ship("D0", "D3"));
+            setupBoard.AddShip(new Ship("E0", "E4"));
             Assert.True(setupBoard.IsValid);
 
-            var excessShip = new Ship(new Point(0,0), new Point(0, length));
+            var excessShip = new Ship("F0", $"F{length-1}");
             Assert.Equal(length, excessShip.Length);
             
             // When
             setupBoard.AddShip(excessShip);
+
+            // Then
+            Assert.False(setupBoard.IsValid);
+        }
+
+        [Fact]
+        public void SetupBoardNotValidIfShipsOverlap()
+        {
+            // Given            
+            var setupBoard = new SetupBoard();
+            setupBoard.AddShip(new Ship("A0", "A1"));
+            setupBoard.AddShip(new Ship("B0", "B2"));
+            setupBoard.AddShip(new Ship("C0", "C2"));
+            setupBoard.AddShip(new Ship("J0", "J3"));
+                        
+            // When
+            setupBoard.AddShip(new Ship("J3", "J7"));
 
             // Then
             Assert.False(setupBoard.IsValid);
@@ -134,14 +161,10 @@ namespace Battleships.GameEngine.Tests
     public class ShipTests
     {
         [Theory]
-        [InlineData(0, 0, 2, 2)]
-        [InlineData(0, 0, 1, 2)]
-        public void ShipCtorThrowsIfDiagonal(int startX, int startY, int endX, int endY)
+        [InlineData("A0", "B1")]
+        [InlineData("A0", "B2")]
+        public void ShipCtorThrowsIfDiagonal(string start, string end)
         {
-            // Given
-            var start = new Point(startX, startY);
-            var end = new Point(endX, endY);
-            
             // When
             var ex = Record.Exception(() => new Ship(start, end));
             
@@ -152,14 +175,10 @@ namespace Battleships.GameEngine.Tests
         }
                 
         [Theory]
-        [InlineData(0, 0, 0, 1)]
-        [InlineData(0, 0, 0, 6)]
-        public void ShipCtorThrowsIfLengthNotBetween2And5(int startX, int startY, int endX, int endY)
-        {
-            // Given
-            var start = new Point(startX, startY);
-            var end = new Point(endX, endY);
-            
+        [InlineData("A0", "A0")]
+        [InlineData("A0", "A5")]
+        public void ShipCtorThrowsIfLengthNotBetween2And5(string start, string end)
+        {            
             // When
             var ex = Record.Exception(() => new Ship(start, end));
             
@@ -170,20 +189,20 @@ namespace Battleships.GameEngine.Tests
         }
         
         [Theory]
-        [InlineData(0, 0, 0, 2, 2, true)]
-        [InlineData(0, 0, 0, 3, 3, true)]
-        [InlineData(0, 0, 0, 4, 4, true)]
-        [InlineData(0, 0, 0, 5, 5, true)]
-        [InlineData(0, 0, 2, 0, 2, false)]
-        [InlineData(0, 0, 3, 0, 3, false)]
-        [InlineData(0, 0, 4, 0, 4, false)]
-        [InlineData(0, 0, 5, 0, 5, false)]
-        public void ShipHasCorrectDetails(int startX, int startY, int endX, int endY, int expectedLength, bool expectedIsVertical)
-        {
-            // Given
-            var start = new Point(startX, startY);
-            var end = new Point(endX, endY);
-            
+        [InlineData("A0", "A1", 2, true)]
+        [InlineData("A0", "A2", 3, true)]
+        [InlineData("A0", "A3", 4, true)]
+        [InlineData("A0", "A4", 5, true)]
+        [InlineData("J0", "J1", 2, true)]
+        [InlineData("A0", "B0", 2, false)]
+        [InlineData("A0", "C0", 3, false)]
+        [InlineData("A0", "D0", 4, false)]
+        [InlineData("A0", "E0", 5, false)]
+        [InlineData("I0", "J0", 2, false)]
+        [InlineData("B5", "B9", 5, true)]
+        [InlineData("B9", "B5", 5, true)]
+        public void ShipHasCorrectDetails(string start, string end, int expectedLength, bool expectedIsVertical)
+        {            
             // When
             var ship = new Ship(start, end);
             
@@ -191,8 +210,29 @@ namespace Battleships.GameEngine.Tests
             Assert.Equal(expectedLength, ship.Length);
             Assert.Equal(expectedIsVertical, ship.IsVertical);
         }
+    }
 
-        // TODO: Ships must not overlap
-        // TODO: Ships must not exceed grid (10x10 grid, so X:0-9, Y:A-J)
+    public class GridSquareTests
+    {
+        [Theory]
+        [InlineData("A0", 'A', 0, 0, 0)]
+        [InlineData("A1", 'A', 1, 0, 1)]
+        [InlineData("B0", 'B', 0, 1, 0)]
+        [InlineData("b1", 'B', 1, 1, 1)]
+        [InlineData("J0", 'J', 0, 9, 0)]
+        [InlineData("J9", 'J', 9, 9, 9)]
+        [InlineData("j8", 'J', 8, 9, 8)]
+        [InlineData("F5", 'F', 5, 5, 5)]
+        public void GridSquareHasCorrectProperties(string coord, char X, byte Y, int pointX, int pointY)
+        {
+            // When
+            GridSquare gs = coord;
+
+            // Then
+            Assert.Equal(X, gs.X);
+            Assert.Equal(Y, gs.Y);
+            Assert.Equal(pointX, gs.Point.X);
+            Assert.Equal(pointY, gs.Point.Y);
+        }
     }
 }
