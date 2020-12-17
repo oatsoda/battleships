@@ -193,6 +193,6 @@ namespace Battleships.GameEngine.Tests
         }
 
         // TODO: Ships must not overlap
-        // TODO: Ships must not exceed grid (9x9 grid, so 0-8)
+        // TODO: Ships must not exceed grid (10x10 grid, so X:0-9, Y:A-J)
     }
 }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Linq;
 
 namespace Battleships.GameEngine
 {
@@ -20,7 +21,7 @@ namespace Battleships.GameEngine
     
     public class SetupBoard
     {
-        private readonly Dictionary<int, int> m_LengthShipsRequired = new Dictionary<int, int>
+        private static readonly Dictionary<int, int> s_LengthShipsRequired = new Dictionary<int, int>
         {
             { 2, 1 },
             { 3, 2 },
@@ -28,13 +29,9 @@ namespace Battleships.GameEngine
             { 5, 1 }
         };
 
-        private Dictionary<int, List<Ship>> m_ShipsByLength = new Dictionary<int, List<Ship>>
-        {
-            { 2, new List<Ship>(1) },
-            { 3, new List<Ship>(2) },
-            { 4, new List<Ship>(1) },
-            { 5, new List<Ship>(1) }
-        };
+        private Dictionary<int, List<Ship>> m_ShipsByLength = new Dictionary<int, List<Ship>>(
+                s_LengthShipsRequired.Select(kvp => new KeyValuePair<int, List<Ship>>(kvp.Key, new List<Ship>(kvp.Value))) // Init empty lists with required capacity
+                );
 
         public SetupBoard()
         {
@@ -44,10 +41,10 @@ namespace Battleships.GameEngine
         {
             m_ShipsByLength[ship.Length].Add(ship);
 
-            IsValid = m_ShipsByLength[2].Count == m_LengthShipsRequired[2] &&
-                      m_ShipsByLength[3].Count == m_LengthShipsRequired[3] &&
-                      m_ShipsByLength[4].Count == m_LengthShipsRequired[4] &&
-                      m_ShipsByLength[5].Count == m_LengthShipsRequired[5];
+            IsValid = m_ShipsByLength[2].Count == s_LengthShipsRequired[2] &&
+                      m_ShipsByLength[3].Count == s_LengthShipsRequired[3] &&
+                      m_ShipsByLength[4].Count == s_LengthShipsRequired[4] &&
+                      m_ShipsByLength[5].Count == s_LengthShipsRequired[5];
         }
 
         public bool IsValid { get; private set; }
