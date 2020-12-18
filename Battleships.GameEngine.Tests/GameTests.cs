@@ -132,11 +132,8 @@ namespace Battleships.GameEngine.Tests
             Assert.Contains("already fired on A0", argEx.Message);
         }
 
-        // TODO: REDO AS FIRING ON OWN SHIPS!!
+        
 
-        // Returns WON if all ships sunk
-        // 
-                
         [Theory]
         [InlineData("B5", false)]
         [InlineData("H6", true)]
@@ -209,5 +206,29 @@ namespace Battleships.GameEngine.Tests
                 m_Game.OpponentsTurn();
             }
         }
+
+        
+        [Fact]
+        public void OpponentsTurnReturnsGridSquare()
+        {
+            // Given
+            m_Game.Fire("A0");
+            Assert.Equal(Players.PlayerTwo, m_Game.Turn);
+
+            // When
+            m_Game.OpponentsTurn();
+
+            // Then
+            Assert.Equal(Players.PlayerOne, m_Game.Turn);
+        }
+
+        [Fact(Skip = "How to test if random?")]
+        public void OpponentsTurnReturnsWhetherHit() { } // How to test
+        
+        [Fact(Skip = "How to test if random?")]
+        public void OpponentsTurnReturnsWhetherSunk() { } // How to test
+                
+        [Fact(Skip = "How to test if random?")]
+        public void OpponentsTurnReturnsWhetherWon() { } // How to test
     }
 }
