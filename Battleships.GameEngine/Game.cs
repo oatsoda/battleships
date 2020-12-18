@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Battleships.GameEngine.Random;
+using System;
 
 namespace Battleships.GameEngine
 {
@@ -7,7 +8,9 @@ namespace Battleships.GameEngine
         private readonly SetupBoard m_PlayerOneSetup;
         private readonly ShotState[,] m_PlayerOneShots = new ShotState[10, 10];
 
-        private readonly SetupBoard m_PlayerTwoSetup;        
+        private readonly SetupBoard m_PlayerTwoSetup;
+        private readonly ShotState[,] m_PlayerTwoShots = new ShotState[10, 10];
+        private readonly IRandomCoordGenerator m_RandomCoordGenerator;
 
         public Players Turn { get; private set; }
 
@@ -20,12 +23,13 @@ namespace Battleships.GameEngine
             Turn = Players.PlayerOne;
         }
 
-        internal Game(SetupBoard setupBoard, SetupBoard opponentsSetupBoard) : this(setupBoard)
+        internal Game(SetupBoard setupBoard, SetupBoard opponentsSetupBoard, IRandomCoordGenerator randomCoordGenerator) : this(setupBoard)
         {
             if (!setupBoard.IsValid)
                 throw new ArgumentException("Opponent Board is not valid.",  nameof(setupBoard));
 
             m_PlayerTwoSetup = opponentsSetupBoard;
+            m_RandomCoordGenerator = randomCoordGenerator;
         }
 
 
@@ -38,45 +42,57 @@ namespace Battleships.GameEngine
                 throw new ArgumentException($"You have already fired on {target}.");
 
             Turn = Players.PlayerTwo;
-
-            var isHit = m_PlayerTwoSetup.ShipsByOccupationPoints.ContainsKey(target.Point);
-
-            m_PlayerOneShots[target.Point.X, target.Point.Y] = isHit ? ShotState.Hit : ShotState.Miss;
-
-            if (!isHit)
-                return new FireResult();
-
-            var hitShip = m_PlayerTwoSetup.ShipsByOccupationPoints[target.Point];
-            var isSunk = hitShip.Hit(target.Point);
-
-            var haveWon = isSunk ? m_PlayerTwoSetup.AllSunk : false;
             
-            return new FireResult(isHit, isSunk, isSunk ? hitShip.Length : null, haveWon);
+            return GetResult(target, m_PlayerTwoSetup, m_PlayerOneShots);
         }
 
-        public void OpponentsTurn()
+        public FireResult OpponentsTurn()
         {
             if (Turn != Players.PlayerTwo)
                 throw new InvalidOperationException("It is not your opponents turn. It is your turn.");
 
             Turn = Players.PlayerOne;
+
+            var target = (GridSquare)m_RandomCoordGenerator.GetRandomCoord();
+
+            return GetResult(target, m_PlayerOneSetup, m_PlayerTwoShots);
+        }
+
+        private static FireResult GetResult(GridSquare target, SetupBoard targetBoard, ShotState[,] shotRecorder)
+        {
+            var isHit = targetBoard.ShipsByOccupationPoints.ContainsKey(target.Point);
+            
+            shotRecorder[target.Point.X, target.Point.Y] = isHit ? ShotState.Hit : ShotState.Miss;
+
+            if (!isHit)
+                return new FireResult(target);            
+
+            var hitShip = targetBoard.ShipsByOccupationPoints[target.Point];
+            var isSunk = hitShip.Hit(target.Point);
+            
+            var haveWon = isSunk ? targetBoard.AllSunk : false;
+
+            return new FireResult(target, isSunk, isSunk ? hitShip.Length : null, haveWon);
         }
     }
 
     public class FireResult
     {
+        public GridSquare Target { get; }
         public bool IsHit { get; }
         public bool IsSunkShip { get; }
         public int? ShipSunkSize { get; }
         public bool HaveWon { get; set; }
 
-        public FireResult()
+        public FireResult(GridSquare targetMissed)
         {
+            Target = targetMissed;
         }
 
-        public FireResult(bool isHit, bool isSunkShip, int? sizeIfSunk, bool haveWon)
+        public FireResult(GridSquare targetHit, bool isSunkShip, int? sizeIfSunk, bool haveWon)
         {
-            IsHit = isHit;
+            Target = targetHit;
+            IsHit = true;
             IsSunkShip = isSunkShip;
             ShipSunkSize = sizeIfSunk;
             HaveWon = haveWon;

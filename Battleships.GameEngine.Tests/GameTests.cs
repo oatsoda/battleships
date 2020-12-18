@@ -1,3 +1,5 @@
+using Battleships.GameEngine.Random;
+using Moq;
 using System;
 using System.Collections.Generic;
 using Xunit;
@@ -8,8 +10,9 @@ namespace Battleships.GameEngine.Tests
     {
         private readonly SetupBoard m_SetupBoard = new SetupBoard();
         private readonly SetupBoard m_OpponentSetupBoard = new SetupBoard();
-        private readonly Game m_Game;
+        private Game m_Game;
 
+        //private readonly Mock<IRandomCoordGenerator> m_RandomGen = new Mock<IRandomCoordGenerator>();
 
         public GameTests()
         {
@@ -25,7 +28,7 @@ namespace Battleships.GameEngine.Tests
             m_OpponentSetupBoard.AddShip(("I5", "I8"));
             m_OpponentSetupBoard.AddShip(("J5", "J9"));
 
-            m_Game = new Game(m_SetupBoard, m_OpponentSetupBoard);
+            m_Game = new Game(m_SetupBoard, m_OpponentSetupBoard, new RandomCoordGenerator());
         }
 
         [Fact]
@@ -216,19 +219,123 @@ namespace Battleships.GameEngine.Tests
             Assert.Equal(Players.PlayerTwo, m_Game.Turn);
 
             // When
-            m_Game.OpponentsTurn();
+            var result = m_Game.OpponentsTurn();
 
             // Then
-            Assert.Equal(Players.PlayerOne, m_Game.Turn);
+            Assert.NotEqual(default, result.Target);
+            Assert.True(result.Target.X >= 'A' && result.Target.X <= 'J');
+            Assert.True(result.Target.Y >= 0 && result.Target.Y <= 9);
+        }
+        
+        // TODO
+        [Fact(Skip = "Is this implemented in the random generator (to only return unique?) ?")]
+        public void OpponentsTurnDoesNotFireAtSameGridSquareMoreThanOnce() 
+        {
+        } 
+                
+        [Theory]
+        [InlineData("F6", false)]
+        [InlineData("A0", true)]
+        public void OpponentsTurnReturnsWhetherHit(string coords, bool expectedHit)
+        {
+            // Given
+            m_Game = new Game(m_SetupBoard, m_OpponentSetupBoard, RandomReturn(coords).Object);
+            m_Game.Fire("A0");
+
+            // When
+            var result = m_Game.OpponentsTurn();
+
+            // Then
+            Assert.Equal(expectedHit, result.IsHit);
         }
 
-        [Fact(Skip = "How to test if random?")]
-        public void OpponentsTurnReturnsWhetherHit() { } // How to test
-        
-        [Fact(Skip = "How to test if random?")]
-        public void OpponentsTurnReturnsWhetherSunk() { } // How to test
-                
-        [Fact(Skip = "How to test if random?")]
-        public void OpponentsTurnReturnsWhetherWon() { } // How to test
+        public static IEnumerable<object[]> OpponentSunkShots()
+        {
+            yield return new object[] { new[] { "A0", "A1" }, true, 2 };
+            yield return new object[] { new[] { "A1", "A0" }, true, 2 };
+            yield return new object[] { new[] { "A0", "B0" }, false, null };
+            yield return new object[] { new[] { "A1", "A2" }, false, null };
+            yield return new object[] { new[] { "J9", "D3", "D0", "D1", "D2" }, true, 4 };
+        }
+
+        [Theory]
+        [MemberData(nameof(OpponentSunkShots))]
+        public void OpponentsTurnReturnsWhetherSunk(string[] coords, bool expectedSunk, int? expectedSunkSize)
+        {
+            // Given
+            m_Game = new Game(m_SetupBoard, m_OpponentSetupBoard, RandomReturn(coords).Object);
+            m_Game.Fire("A0");
+
+            var x = 0;
+            foreach (var _ in coords)
+            {
+                var result = m_Game.OpponentsTurn();
+                if (++x != coords.Length)
+                {
+                    Assert.False(result.IsSunkShip);
+                    Assert.Null(result.ShipSunkSize);
+                }
+                else
+                {
+                    Assert.Equal(expectedSunk, result.IsSunkShip);
+                    Assert.Equal(expectedSunkSize, result.ShipSunkSize);
+                }
+                m_Game.Fire(GetSequentialCoord(x));
+            }
+        }
+
+        public static IEnumerable<object[]> OpponentWonShots()
+        {
+            yield return new object[] { new[] { "A0", "A1", 
+                                                "B0", "B1", "B2",
+                                                "C0", "C1", "C2",
+                                                "D0", "D1", "D2", "D3",
+                                                "E0", "E1", "E2", "E3", "E4"
+                                              } };
+        }
+
+        [Theory]
+        [MemberData(nameof(OpponentWonShots))]
+        public void OpponentsTurnReturnsWhetherWon(string[] coords)
+        {
+            // Given
+            m_Game = new Game(m_SetupBoard, m_OpponentSetupBoard, RandomReturn(coords).Object);
+            m_Game.Fire("A0");
+
+            var x = 0;
+            foreach (var _ in coords)
+            {
+                var result = m_Game.OpponentsTurn();
+                if (++x != coords.Length)
+                {
+                    Assert.False(result.HaveWon);
+                }
+                else
+                {
+                    Assert.True(result.HaveWon);
+                }
+                m_Game.Fire(GetSequentialCoord(x));
+            }
+        }
+
+
+        private static Mock<IRandomCoordGenerator> RandomReturn(params string[] coords)
+        {
+            var random = new Mock<IRandomCoordGenerator>();
+            var r = random.SetupSequence(r => r.GetRandomCoord())
+                          .Returns(coords[0]);
+
+            for (int i = 1; i < coords.Length; i++)
+                r = r.Returns(coords[i]);
+
+            return random;
+        }
+
+        private static string GetSequentialCoord(int coordNumber)
+        {
+            var c = coordNumber / 10;
+            var r = coordNumber % 10;
+            return $"{(char)(c+65)}{r}";
+        }
     }
 }
