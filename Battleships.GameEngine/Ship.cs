@@ -7,10 +7,12 @@ namespace Battleships.GameEngine
 {
     public class Ship
     {
+        private Dictionary<Point, bool> m_PointsHit;
+
         public int Length { get; private set; }
         public bool IsVertical { get; private set; }
-
-        public List<Point> Occupies { get; private set; }
+        
+        public IEnumerable<Point> Occupies => m_PointsHit.Keys;
 
         public Ship(GridSquare start, GridSquare end) : this(start.Point, end.Point) { }
 
@@ -37,9 +39,15 @@ namespace Battleships.GameEngine
             IsVertical = isVertical;
             Length = length;
 
-            Occupies = IsVertical 
-                ? Enumerable.Range(start.Y, (end.Y - start.Y)+1).Select(y => new Point(start.X, y)).ToList()
-                : Enumerable.Range(start.X, (end.X - start.X)+1).Select(x => new Point(x, start.Y)).ToList();
+            m_PointsHit = IsVertical 
+                ? Enumerable.Range(start.Y, (end.Y - start.Y)+1).Select(y => new Point(start.X, y)).ToDictionary(p => p, p => false)
+                : Enumerable.Range(start.X, (end.X - start.X)+1).Select(x => new Point(x, start.Y)).ToDictionary(p => p, p => false);
+        }
+
+        internal bool Hit(Point point)
+        {
+            m_PointsHit[point] = true;
+            return m_PointsHit.All(p => p.Value); // Whether sunk
         }
         
         public static implicit operator Ship((string start, string end) coords) => new Ship(coords.start, coords.end);

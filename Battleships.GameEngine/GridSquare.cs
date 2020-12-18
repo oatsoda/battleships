@@ -23,5 +23,7 @@ namespace Battleships.GameEngine
         }
         
         public static implicit operator GridSquare(string c) => new GridSquare(c);
+
+        public override string ToString() => $"{X}{Y}";
     }
 }
