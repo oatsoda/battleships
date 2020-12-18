@@ -1,5 +1,4 @@
 using System;
-using System.Drawing;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -44,17 +43,17 @@ namespace Battleships.GameEngine.Tests
         public static SetupBoard CreateValidSetupBoard()
         {
             var setupBoard = new SetupBoard();
-            setupBoard.AddShip(new Ship("A0", "A1"));
-            setupBoard.AddShip(new Ship("B0", "B2"));
-            setupBoard.AddShip(new Ship("C0", "C2"));
-            setupBoard.AddShip(new Ship("D0", "D3"));
-            setupBoard.AddShip(new Ship("E0", "E4"));
+            setupBoard.AddShip(("A0", "A1"));
+            setupBoard.AddShip(("B0", "B2"));
+            setupBoard.AddShip(("C0", "C2"));
+            setupBoard.AddShip(("D0", "D3"));
+            setupBoard.AddShip(("E0", "E4"));
             Assert.True(setupBoard.IsValid);
             return setupBoard;
         }
 
         public static Ship CreateValidShipOfLength(int length, int putOnCol = 0)
-            {return new Ship($"{(char)(65+putOnCol)}0", $"{(char)(65+putOnCol)}{length-1}");
+            {return ($"{(char)(65+putOnCol)}0", $"{(char)(65+putOnCol)}{length-1}");
         }
     }
 
@@ -123,11 +122,11 @@ namespace Battleships.GameEngine.Tests
         {
             // Given            
             var setupBoard = new SetupBoard();
-            setupBoard.AddShip(new Ship("A0", "A1"));
-            setupBoard.AddShip(new Ship("B0", "B2"));
-            setupBoard.AddShip(new Ship("C0", "C2"));
-            setupBoard.AddShip(new Ship("D0", "D3"));
-            setupBoard.AddShip(new Ship("E0", "E4"));
+            setupBoard.AddShip(("A0", "A1"));
+            setupBoard.AddShip(("B0", "B2"));
+            setupBoard.AddShip(("C0", "C2"));
+            setupBoard.AddShip(("D0", "D3"));
+            setupBoard.AddShip(("E0", "E4"));
             Assert.True(setupBoard.IsValid);
 
             var excessShip = new Ship("F0", $"F{length-1}");
@@ -145,13 +144,13 @@ namespace Battleships.GameEngine.Tests
         {
             // Given            
             var setupBoard = new SetupBoard();
-            setupBoard.AddShip(new Ship("A0", "A1"));
-            setupBoard.AddShip(new Ship("B0", "B2"));
-            setupBoard.AddShip(new Ship("C0", "C2"));
-            setupBoard.AddShip(new Ship("J0", "J3"));
+            setupBoard.AddShip(("A0", "A1"));
+            setupBoard.AddShip(("B0", "B2"));
+            setupBoard.AddShip(("C0", "C2"));
+            setupBoard.AddShip(("J0", "J3"));
                         
             // When
-            setupBoard.AddShip(new Ship("J3", "J7"));
+            setupBoard.AddShip(("J3", "J7"));
 
             // Then
             Assert.False(setupBoard.IsValid);
