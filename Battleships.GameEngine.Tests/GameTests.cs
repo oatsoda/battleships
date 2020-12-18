@@ -53,7 +53,8 @@ namespace Battleships.GameEngine.Tests
         }
 
         public static Ship CreateValidShipOfLength(int length, int putOnCol = 0)
-            {return ($"{(char)(65+putOnCol)}0", $"{(char)(65+putOnCol)}{length-1}");
+        {
+            return ($"{(char)(65+putOnCol)}0", $"{(char)(65+putOnCol)}{length-1}");
         }
     }
 
