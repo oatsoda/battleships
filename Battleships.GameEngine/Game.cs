@@ -4,19 +4,30 @@ namespace Battleships.GameEngine
 {
     public class Game
     {
-        private readonly SetupBoard m_SetupBoard;
+        private readonly SetupBoard m_PlayerOneSetup;
         private readonly ShotState[,] m_PlayerOneShots = new ShotState[10, 10];
+
+        private readonly SetupBoard m_PlayerTwoSetup;        
 
         public Players Turn { get; private set; }
 
         public Game(SetupBoard setupBoard) 
         { 
             if (!setupBoard.IsValid)
-                throw new ArgumentException("Start Board is not valid.",  nameof(setupBoard));
+                throw new ArgumentException("Setup Board is not valid.",  nameof(setupBoard));
 
-            m_SetupBoard = setupBoard;
+            m_PlayerOneSetup = setupBoard;
             Turn = Players.PlayerOne;
         }
+
+        internal Game(SetupBoard setupBoard, SetupBoard opponentsSetupBoard) : this(setupBoard)
+        {
+            if (!setupBoard.IsValid)
+                throw new ArgumentException("Opponent Board is not valid.",  nameof(setupBoard));
+
+            m_PlayerTwoSetup = opponentsSetupBoard;
+        }
+
 
         public FireResult Fire(GridSquare target)
         {
@@ -28,17 +39,19 @@ namespace Battleships.GameEngine
 
             Turn = Players.PlayerTwo;
 
-            var isHit = m_SetupBoard.OccupationPointsByShip.ContainsKey(target.Point);
+            var isHit = m_PlayerTwoSetup.ShipsByOccupationPoints.ContainsKey(target.Point);
 
             m_PlayerOneShots[target.Point.X, target.Point.Y] = isHit ? ShotState.Hit : ShotState.Miss;
 
             if (!isHit)
                 return new FireResult();
 
-            var hitShip = m_SetupBoard.OccupationPointsByShip[target.Point];
+            var hitShip = m_PlayerTwoSetup.ShipsByOccupationPoints[target.Point];
             var isSunk = hitShip.Hit(target.Point);
+
+            var haveWon = isSunk ? m_PlayerTwoSetup.AllSunk : false;
             
-            return new FireResult(isHit, isSunk, isSunk ? hitShip.Length : null);
+            return new FireResult(isHit, isSunk, isSunk ? hitShip.Length : null, haveWon);
         }
 
         public void OpponentsTurn()
@@ -55,16 +68,18 @@ namespace Battleships.GameEngine
         public bool IsHit { get; }
         public bool IsSunkShip { get; }
         public int? ShipSunkSize { get; }
+        public bool HaveWon { get; set; }
 
         public FireResult()
         {
         }
 
-        public FireResult(bool isHit, bool isSunkShip, int? sizeIfSunk)
+        public FireResult(bool isHit, bool isSunkShip, int? sizeIfSunk, bool haveWon)
         {
             IsHit = isHit;
             IsSunkShip = isSunkShip;
             ShipSunkSize = sizeIfSunk;
+            HaveWon = haveWon;
         }
     }
 

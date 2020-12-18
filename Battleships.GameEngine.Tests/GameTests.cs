@@ -7,7 +7,9 @@ namespace Battleships.GameEngine.Tests
     public class GameTests
     {
         private readonly SetupBoard m_SetupBoard = new SetupBoard();
+        private readonly SetupBoard m_OpponentSetupBoard = new SetupBoard();
         private readonly Game m_Game;
+
 
         public GameTests()
         {
@@ -16,8 +18,14 @@ namespace Battleships.GameEngine.Tests
             m_SetupBoard.AddShip(("C0", "C2"));
             m_SetupBoard.AddShip(("D0", "D3"));
             m_SetupBoard.AddShip(("E0", "E4"));
+            
+            m_OpponentSetupBoard.AddShip(("F5", "F6"));
+            m_OpponentSetupBoard.AddShip(("G5", "G7"));
+            m_OpponentSetupBoard.AddShip(("H5", "H7"));
+            m_OpponentSetupBoard.AddShip(("I5", "I8"));
+            m_OpponentSetupBoard.AddShip(("J5", "J9"));
 
-            m_Game = new Game(m_SetupBoard);
+            m_Game = new Game(m_SetupBoard, m_OpponentSetupBoard);
         }
 
         [Fact]
@@ -125,10 +133,13 @@ namespace Battleships.GameEngine.Tests
         }
 
         // TODO: REDO AS FIRING ON OWN SHIPS!!
+
+        // Returns WON if all ships sunk
+        // 
                 
         [Theory]
-        [InlineData("A2", false)]
-        [InlineData("A1", true)]
+        [InlineData("B5", false)]
+        [InlineData("H6", true)]
         public void FireReturnsWhetherHit(string coords, bool expectedHit)
         {
             // When
@@ -138,16 +149,18 @@ namespace Battleships.GameEngine.Tests
             Assert.Equal(expectedHit, result.IsHit);
         }
 
-        public static IEnumerable<object[]> Shots()
+        public static IEnumerable<object[]> SunkShots()
         {
-            yield return new object[] { new[] { "A1", "A0" }, true, 2 };
-            yield return new object[] { new[] { "B0", "B1" }, false, null };
-            yield return new object[] { new[] { "A0", "B0", "B1", "B2" }, true, 3 };
+            yield return new object[] { new[] { "F5", "F6" }, true, 2 };
+            yield return new object[] { new[] { "F6", "F5" }, true, 2 };
+            yield return new object[] { new[] { "F5", "G5" }, false, null };
+            yield return new object[] { new[] { "F5", "F4" }, false, null };
+            yield return new object[] { new[] { "A0", "I5", "I8", "I7", "I6" }, true, 4 };
         }
-         
+
         [Theory]
-        [MemberData(nameof(Shots))]
-        public void FireReturnsWhetherShipSunk(string[] coords, bool expectedSunk, int? expectedSunkSize)
+        [MemberData(nameof(SunkShots))]
+        public void FireReturnsWhetherSunk(string[] coords, bool expectedSunk, int? expectedSunkSize)
         {
             var x = 0;
             foreach (var c in coords)
@@ -166,6 +179,35 @@ namespace Battleships.GameEngine.Tests
                 m_Game.OpponentsTurn();
             }
         }
-        
+
+        public static IEnumerable<object[]> WonShots()
+        {
+            yield return new object[] { new[] { "F5", "F6", 
+                                                "G5", "G6", "G7",
+                                                "H5", "H6", "H7",
+                                                "I5", "I6", "I7", "I8",
+                                                "J5", "J6", "J7", "J8", "J9"
+                                              } };
+        }
+
+        [Theory]
+        [MemberData(nameof(WonShots))]
+        public void FireReturnsWhetherWon(string[] coords)
+        {
+            var x = 0;
+            foreach (var c in coords)
+            {
+                var result = m_Game.Fire(c);
+                if (++x != coords.Length)
+                {
+                    Assert.False(result.HaveWon);
+                }
+                else
+                {
+                    Assert.True(result.HaveWon);
+                }
+                m_Game.OpponentsTurn();
+            }
+        }
     }
 }

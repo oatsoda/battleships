@@ -20,9 +20,9 @@ namespace Battleships.GameEngine
 
         public bool IsValid { get; private set; }
 
-        //public List<Point> OccupationPoints = new List<Point>(17);
+        public Dictionary<Point, Ship> ShipsByOccupationPoints = new Dictionary<Point, Ship>(17);
 
-        public Dictionary<Point, Ship> OccupationPointsByShip = new Dictionary<Point, Ship>(17);
+        public bool AllSunk => m_ShipsByLength.Values.SelectMany(ss => ss).All(s => s.IsSunk);
 
         public void AddShip(Ship ship)
         {
@@ -31,26 +31,18 @@ namespace Battleships.GameEngine
             var shipOverlaps = false;
             foreach (var p in ship.Occupies)
             {
-                if (OccupationPointsByShip.ContainsKey(p))
+                if (ShipsByOccupationPoints.ContainsKey(p))
                     shipOverlaps = true;
                 else
-                    OccupationPointsByShip[p] = ship;
+                    ShipsByOccupationPoints[p] = ship;
             }
 
-
-            //OccupationPoints.AddRange(ship.Occupies);
 
             IsValid = m_ShipsByLength[2].Count == s_LengthShipsRequired[2] &&
                       m_ShipsByLength[3].Count == s_LengthShipsRequired[3] &&
                       m_ShipsByLength[4].Count == s_LengthShipsRequired[4] &&
                       m_ShipsByLength[5].Count == s_LengthShipsRequired[5] &&
-                      !shipOverlaps;//ShipsOverlap();
+                      !shipOverlaps;
         }
-
-        //private bool ShipsOverlap()
-        //{
-        //    // TODO: Optimise by pre-populating lists, occupies or by checking separate in AddShip? etc.
-        //    return OccupationPoints.GroupBy(p => p).Any(g => g.Count() > 1);
-        //}
     }
 }

@@ -16,6 +16,8 @@ namespace Battleships.GameEngine
 
         public Ship(GridSquare start, GridSquare end) : this(start.Point, end.Point) { }
 
+        public bool IsSunk { get; private set; }
+
         private Ship(Point start, Point end)
         {
             if (start.X != end.X && start.Y != end.Y)
@@ -47,7 +49,8 @@ namespace Battleships.GameEngine
         internal bool Hit(Point point)
         {
             m_PointsHit[point] = true;
-            return m_PointsHit.All(p => p.Value); // Whether sunk
+            IsSunk = m_PointsHit.All(p => p.Value); // Whether sunk
+            return IsSunk;
         }
         
         public static implicit operator Ship((string start, string end) coords) => new Ship(coords.start, coords.end);

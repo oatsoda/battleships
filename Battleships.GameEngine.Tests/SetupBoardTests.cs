@@ -71,5 +71,7 @@ namespace Battleships.GameEngine.Tests
             // Then
             Assert.False(m_SetupBoard.IsValid);
         }
+
+        // TODO: Add Random generation
     }
 }
