@@ -5,6 +5,7 @@ namespace Battleships.GameEngine
 {
     public class Game
     {
+        // TODO: Expose shot grids? Readonly 2d arrays?
         private readonly SetupBoard m_PlayerOneSetup;
         private readonly ShotState[,] m_PlayerOneShots = new ShotState[10, 10];
 
@@ -13,25 +14,29 @@ namespace Battleships.GameEngine
         private readonly IRandomCoordGenerator m_RandomCoordGenerator;
 
         public Players Turn { get; private set; }
+        
+        public Game(SetupBoard setupBoard) : this(setupBoard, new SetupBoard().GenerateRandom())
+        {
+        }
 
-        public Game(SetupBoard setupBoard) 
+        private Game(SetupBoard playerOneSetup, SetupBoard playerTwoSetup) 
         { 
-            if (!setupBoard.IsValid)
-                throw new ArgumentException("Setup Board is not valid.",  nameof(setupBoard));
+            if (!playerOneSetup.IsValid)
+                throw new ArgumentException("Player One setup board is not valid.",  nameof(playerOneSetup));
+            
+            if (!playerTwoSetup.IsValid)
+                throw new ArgumentException("Player Two setup board is not valid.",  nameof(playerTwoSetup));
 
-            m_PlayerOneSetup = setupBoard;
+            m_PlayerOneSetup = playerOneSetup;
+            m_PlayerTwoSetup = playerTwoSetup;
+
             Turn = Players.PlayerOne;
         }
 
-        internal Game(SetupBoard setupBoard, SetupBoard opponentsSetupBoard, IRandomCoordGenerator randomCoordGenerator) : this(setupBoard)
+        internal Game(SetupBoard setupBoard, SetupBoard opponentsSetupBoard, IRandomCoordGenerator randomCoordGenerator) : this(setupBoard, opponentsSetupBoard)
         {
-            if (!setupBoard.IsValid)
-                throw new ArgumentException("Opponent Board is not valid.",  nameof(setupBoard));
-
-            m_PlayerTwoSetup = opponentsSetupBoard;
             m_RandomCoordGenerator = randomCoordGenerator;
         }
-
 
         public FireResult Fire(GridSquare target)
         {

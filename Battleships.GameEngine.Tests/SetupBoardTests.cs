@@ -1,4 +1,5 @@
-﻿using Xunit;
+﻿using System.Linq;
+using Xunit;
 using Xunit.Abstractions;
 
 namespace Battleships.GameEngine.Tests
@@ -72,6 +73,21 @@ namespace Battleships.GameEngine.Tests
             Assert.False(m_SetupBoard.IsValid);
         }
 
-        // TODO: Add Random generation
+        [Fact]
+        public void GenerateRandomCreatesValidRandomBoard()
+        {                        
+            // Given
+            var setupBoardOne = new SetupBoard();
+            var setupBoardTwo = new SetupBoard();
+            
+            // When
+            setupBoardOne.GenerateRandom();
+            setupBoardTwo.GenerateRandom();
+
+            // Then
+            Assert.True(setupBoardOne.IsValid);
+            Assert.True(setupBoardTwo.IsValid);
+            Assert.False(setupBoardOne.ShipsByOccupationPoints.Keys.All(p => setupBoardTwo.ShipsByOccupationPoints.ContainsKey(p)));
+        }
     }
 }
