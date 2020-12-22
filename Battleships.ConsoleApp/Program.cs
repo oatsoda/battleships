@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Text;
+using System.Linq;
 
 namespace Battleships.ConsoleApp
 {
@@ -7,17 +7,37 @@ namespace Battleships.ConsoleApp
     {
         static void Main(string[] args)
         {
-            var gridDisplay = new GridDisplay();
-            gridDisplay.DrawGrid(10, 10);
-            
-            gridDisplay.DrawGrid(80, 10);
+            var p1 = GridDisplay.DrawGrid(10, 10);
+
+            for (int i = 0; i < p1.GridSpaces.GetLength(0); i++)
+                for (int j = 0; j < p1.GridSpaces.GetLength(1); j++)
+                    i.ToString().DrawAt(p1.GridSpaces[i,j].x, p1.GridSpaces[i,j].y);
+
+            GridDisplay.DrawGrid(p1.MaxX + 10, 10);
 
             Console.ReadLine();
         }
     }
 
-    public class GridDisplay
+    public class PlayerGrid
     {
+        public int MaxX { get; private set; }
+        public int MaxY { get; private set; }
+
+        public (int x, int y)[,] GridSpaces { get; private set; }
+
+        public PlayerGrid(int maxX, int maxY, (int x, int y)[,] gridSpaces)
+        {
+            MaxX = maxX;
+            MaxY = maxY;
+            GridSpaces = gridSpaces;
+        }
+    }
+
+    public static class GridDisplay
+    {
+#pragma warning disable IDE1006 // Naming Styles
+
         private const int MAX_ROWS = 10;
         private const int MAX_COLS = 10;
 
@@ -42,13 +62,33 @@ namespace Battleships.ConsoleApp
 
         private static string InnerCross = "┼";
 
-        public void DrawGrid(int x, int y)
+#pragma warning restore IDE1006 // Naming Styles
+
+        public static PlayerGrid DrawGrid(int x, int y)
         {
             for (int i = 1; i <= MAX_ROWS; i++)
                 DrawGridRow(i, x, y);
+
+            var cellMidX = PER_CELL_X / 2;
+            var cellMidY = PER_CELL_Y / 2;
+            var g = Enumerable.Range(0, MAX_COLS)
+                                    .Select(c => 
+                                    {
+                                        var cX = x+(c*PER_CELL_X)+cellMidX;
+                                        return Enumerable.Range(0, MAX_ROWS)
+                                                                 .Select(r => (cX, y+(r*PER_CELL_Y)+cellMidY)).ToArray();
+                                                                 
+                                    }).ToArray();
+
+            var spaces = new (int x, int y)[MAX_COLS, MAX_ROWS];
+            for (var c = 0; c < g.Count(); c++)
+                for (var r = 0; r < g[c].Count(); r++)
+                    spaces[c,r] = g[c][r];
+
+            return new PlayerGrid(x+(PER_CELL_X*MAX_COLS)+1, y+(PER_CELL_Y*MAX_ROWS)+1, spaces);
         }
 
-        private void DrawGridRow(int rowNumber, int startX, int startY)
+        private static void DrawGridRow(int rowNumber, int startX, int startY)
         {
             var rowIndex = startY+((rowNumber-1)*PER_CELL_Y);
 
@@ -77,7 +117,7 @@ namespace Battleships.ConsoleApp
                 DrawCell(startX+(i * PER_CELL_X)+1, rowIndex+1, (i+1 == MAX_COLS), rowNumber == MAX_ROWS);            
         }
 
-        private void DrawCell(int startX, int startY, bool isOuterVert, bool isOuterHoriz)
+        private static void DrawCell(int startX, int startY, bool isOuterVert, bool isOuterHoriz)
         {            
             var maxOffsetIndexX = PER_CELL_X-1;
             var maxOffsetIndexY = PER_CELL_Y-1;
@@ -102,10 +142,18 @@ namespace Battleships.ConsoleApp
             DrawAt(startX+maxOffsetIndexX, startY+maxOffsetIndexY, bottomRight);
         }
 
-        private static void DrawAt(int x, int y, string val)
+        public static void DrawAt(int x, int y, string val)
         {
             Console.SetCursorPosition(x, y);
             Console.Write(val);
+        }
+    }
+
+    public static class StringExtensions
+    {
+        public static void DrawAt(this string val, int x, int y)
+        {
+            GridDisplay.DrawAt(x, y, val);
         }
     }
 }
