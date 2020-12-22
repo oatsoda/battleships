@@ -8,8 +8,9 @@ namespace Battleships.ConsoleApp
         static void Main(string[] args)
         {
             var gridDisplay = new GridDisplay();
-            gridDisplay.DrawGrid();
-
+            gridDisplay.DrawGrid(10, 10);
+            
+            gridDisplay.DrawGrid(80, 10);
 
             Console.ReadLine();
         }
@@ -41,41 +42,39 @@ namespace Battleships.ConsoleApp
 
         private static string InnerCross = "┼";
 
-        public void DrawGrid()
+        public void DrawGrid(int x, int y)
         {
             for (int i = 1; i <= MAX_ROWS; i++)
-                DrawGridRow(i);
+                DrawGridRow(i, x, y);
         }
 
-        private void DrawGridRow(int rowNumber)
+        private void DrawGridRow(int rowNumber, int startX, int startY)
         {
-            var rowIndex = (rowNumber-1)*PER_CELL_Y;
+            var rowIndex = startY+((rowNumber-1)*PER_CELL_Y);
 
             // Draw Top Left
             var topLeft = rowNumber == 1 
                 ? OuterTopLeft 
                 : OuterLeftTee;
-            DrawAt(0, rowIndex, topLeft);
+            DrawAt(startX, rowIndex, topLeft);
 
             // Draw Left-hand side            
             var maxOffsetIndex = PER_CELL_Y-1;
             for (int i = 1; i <= maxOffsetIndex; i++)
-                DrawAt(0, rowIndex+i, OuterVert);
+                DrawAt(startX, rowIndex+i, OuterVert);
 
             if (rowNumber == MAX_ROWS)
-                DrawAt(0, rowIndex+PER_CELL_Y, OuterBottomLeft);
+                DrawAt(startX, rowIndex+PER_CELL_Y, OuterBottomLeft);
 
             if (rowNumber == 1) // First row, draw top border
             {
                 for (int i = 1; i < (MAX_COLS * PER_CELL_X); i++)
-                    DrawAt(i, rowIndex, i % PER_CELL_X == 0 ? OuterTopTee : OuterHoriz);
-                DrawAt((MAX_COLS * PER_CELL_X), rowIndex, OuterTopRight);
+                    DrawAt(startX+i, rowIndex, i % PER_CELL_X == 0 ? OuterTopTee : OuterHoriz);
+                DrawAt(startX+(MAX_COLS * PER_CELL_X), rowIndex, OuterTopRight);
             }
 
             for (int i = 0; i < MAX_COLS; i++)
-            {
-                DrawCell((i * PER_CELL_X)+1, rowIndex+1, (i+1 == MAX_COLS), rowNumber == MAX_ROWS);
-            }
+                DrawCell(startX+(i * PER_CELL_X)+1, rowIndex+1, (i+1 == MAX_COLS), rowNumber == MAX_ROWS);            
         }
 
         private void DrawCell(int startX, int startY, bool isOuterVert, bool isOuterHoriz)
