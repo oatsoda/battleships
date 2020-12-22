@@ -7,13 +7,13 @@ namespace Battleships.ConsoleApp
     {
         static void Main(string[] args)
         {
-            var p1 = GridDisplay.DrawGrid(10, 10);
+            var p1 = GridDisplay.DrawGrid(10, 6);
 
             for (int i = 0; i < p1.GridSpaces.GetLength(0); i++)
                 for (int j = 0; j < p1.GridSpaces.GetLength(1); j++)
                     i.ToString().DrawAt(p1.GridSpaces[i,j].x, p1.GridSpaces[i,j].y);
 
-            GridDisplay.DrawGrid(p1.MaxX + 10, 10);
+            GridDisplay.DrawGrid(p1.MaxX + 10, 6);
 
             Console.ReadLine();
         }
