@@ -6,16 +6,50 @@ namespace Battleships.ConsoleApp
     class Program
     {
         static void Main(string[] args)
+        {            
+            // TODO: A default size etc.
+            //Console.SetWindowPosition(0,0);
+            //Console.SetWindowSize(Console.LargestWindowWidth, Console.LargestWindowHeight);
+
+            var p1 = GridDisplay.DrawGrid(3, 2);
+
+            //for (int i = 0; i < p1.GridSpaces.GetLength(0); i++)
+            //    for (int j = 0; j < p1.GridSpaces.GetLength(1); j++)
+            //        i.ToString().DrawAt(p1.GridSpaces[i,j].x, p1.GridSpaces[i,j].y);
+
+            GridDisplay.DrawGrid(p1.MaxX + 10, 2);
+
+            var commandInput = new CommandInput(0, p1.MaxY + 3);
+            commandInput.WaitForInput("Enter coords of Aircraft Carrier (Length 5), e.g. A0 A4");
+        }
+    }
+    public class CommandInput
+    {
+        private readonly int m_X;
+        private readonly int m_MessageY;
+        private readonly int m_InputY;
+
+        public CommandInput(int x, int y)
         {
-            var p1 = GridDisplay.DrawGrid(10, 6);
+            m_X = x;
+            m_MessageY = y;
+            m_InputY = y+1;
+        }
 
-            for (int i = 0; i < p1.GridSpaces.GetLength(0); i++)
-                for (int j = 0; j < p1.GridSpaces.GetLength(1); j++)
-                    i.ToString().DrawAt(p1.GridSpaces[i,j].x, p1.GridSpaces[i,j].y);
+        public string WaitForInput(string message)
+        {
+            ClearRow(m_MessageY);
+            ClearRow(m_InputY);
+            message.DrawAt(0, m_MessageY);
+            ">".DrawAt(0, m_InputY);
+            Console.SetCursorPosition(2, m_InputY);
+            return Console.ReadLine();
+        }
 
-            GridDisplay.DrawGrid(p1.MaxX + 10, 6);
-
-            Console.ReadLine();
+        private void ClearRow(int y)
+        {
+            for (int x = 0; x < Console.WindowWidth; x++)
+                " ".DrawAt(x, y);            
         }
     }
 
@@ -36,6 +70,14 @@ namespace Battleships.ConsoleApp
 
     public static class GridDisplay
     {
+        public static ConsoleColor DefaultTextColour = Console.ForegroundColor;
+        public static ConsoleColor DefaultBgColour = Console.BackgroundColor;
+
+        static GridDisplay()
+        {
+            Console.OutputEncoding = System.Text.Encoding.UTF8;
+        }        
+
 #pragma warning disable IDE1006 // Naming Styles
 
         private const int MAX_ROWS = 10;
@@ -43,6 +85,9 @@ namespace Battleships.ConsoleApp
 
         private const int PER_CELL_X = 6;
         private const int PER_CELL_Y = 4;
+
+        private static int CellMidX = PER_CELL_X / 2;
+        private static int CellMidY = PER_CELL_Y / 2;
 
         private static string OuterTopLeft = "╔";
         private static string OuterTopRight = "╗";
@@ -66,17 +111,19 @@ namespace Battleships.ConsoleApp
 
         public static PlayerGrid DrawGrid(int x, int y)
         {
+            var newY = DrawHeaderRow(x, y);
+            x = DrawHeaderCol(x, y);
+            y = newY;
+
             for (int i = 1; i <= MAX_ROWS; i++)
                 DrawGridRow(i, x, y);
 
-            var cellMidX = PER_CELL_X / 2;
-            var cellMidY = PER_CELL_Y / 2;
             var g = Enumerable.Range(0, MAX_COLS)
                                     .Select(c => 
                                     {
-                                        var cX = x+(c*PER_CELL_X)+cellMidX;
+                                        var cX = x+(c*PER_CELL_X)+CellMidX;
                                         return Enumerable.Range(0, MAX_ROWS)
-                                                                 .Select(r => (cX, y+(r*PER_CELL_Y)+cellMidY)).ToArray();
+                                                                 .Select(r => (cX, y+(r*PER_CELL_Y)+CellMidY)).ToArray();
                                                                  
                                     }).ToArray();
 
@@ -86,6 +133,34 @@ namespace Battleships.ConsoleApp
                     spaces[c,r] = g[c][r];
 
             return new PlayerGrid(x+(PER_CELL_X*MAX_COLS)+1, y+(PER_CELL_Y*MAX_ROWS)+1, spaces);
+        }
+
+        private static int DrawHeaderRow(int startX, int startY)
+        {
+            for (int i = 1; i <= MAX_COLS+1; i++)
+            {
+                for (int j = 0; j < PER_CELL_Y-1; j++)
+                    DrawAt(startX+((i*PER_CELL_X)-1), startY+j, InnerVert, ConsoleColor.DarkGray);
+
+                if (i > 1)
+                    DrawAt((startX-1)+((i*PER_CELL_X)-CellMidX), (startY-1)+CellMidY, (i-2).AsUpperChar(), ConsoleColor.DarkGray);
+            }
+
+            return startY += (PER_CELL_Y-1);
+        }
+        
+        private static int DrawHeaderCol(int startX, int startY)
+        {
+            for (int i = 1; i <= MAX_ROWS+1; i++)
+            {
+                for (int j = 0; j < PER_CELL_X-1; j++)
+                    DrawAt(startX+j, startY+((i*PER_CELL_Y)-1), InnerHoriz, ConsoleColor.DarkGray);
+
+                if (i > 1)
+                    DrawAt((startX-1)+CellMidX, (startY-1)+((i*PER_CELL_Y)-CellMidY), (i-2).ToString(), ConsoleColor.DarkGray);
+            }
+
+            return startX += (PER_CELL_X-1);
         }
 
         private static void DrawGridRow(int rowNumber, int startX, int startY)
@@ -142,8 +217,11 @@ namespace Battleships.ConsoleApp
             DrawAt(startX+maxOffsetIndexX, startY+maxOffsetIndexY, bottomRight);
         }
 
-        public static void DrawAt(int x, int y, string val)
-        {
+        public static void DrawAt(int x, int y, string val, ConsoleColor? text = null, ConsoleColor? bg = null)
+        {  
+            Console.ForegroundColor = text ?? DefaultTextColour;
+            Console.BackgroundColor = bg ?? DefaultBgColour;
+
             Console.SetCursorPosition(x, y);
             Console.Write(val);
         }
@@ -151,9 +229,14 @@ namespace Battleships.ConsoleApp
 
     public static class StringExtensions
     {
-        public static void DrawAt(this string val, int x, int y)
+        public static void DrawAt(this string val, int x, int y, ConsoleColor? text = null, ConsoleColor? bg = null)
         {
-            GridDisplay.DrawAt(x, y, val);
+            GridDisplay.DrawAt(x, y, val, text, bg);
         }
+    }
+
+    public static class IntExtensions
+    {
+        public static string AsUpperChar(this int val) => ((char)(val+65)).ToString();
     }
 }
