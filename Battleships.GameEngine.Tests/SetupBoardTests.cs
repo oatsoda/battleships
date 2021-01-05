@@ -47,7 +47,7 @@ namespace Battleships.GameEngine.Tests
         [InlineData(4)]
         [InlineData(3)]
         [InlineData(2)]
-        public void SetupBoardNotvalidIfTooManyShipsForLength(int length)
+        public void SetupBoardNotValidIfTooManyShipsForLength(int length)
         {
             // Given          
             m_SetupBoard.AddShip(("E0", "E4"));

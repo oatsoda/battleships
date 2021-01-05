@@ -15,7 +15,7 @@ namespace Battleships.GameEngine
             { 4, 1 },
             { 5, 1 }
         };
-
+                
         private Dictionary<int, List<Ship>> m_ShipsByLength = new Dictionary<int, List<Ship>>(
                 s_LengthShipsRequired.Select(kvp => new KeyValuePair<int, List<Ship>>(kvp.Key, new List<Ship>(kvp.Value))) // Init empty lists with required capacity
                 );

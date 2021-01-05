@@ -6,23 +6,23 @@ namespace Battleships.ConsoleApp
     class Program
     {
         static void Main(string[] args)
-        {            
-            // TODO: A default size etc.
-            //Console.SetWindowPosition(0,0);
-            //Console.SetWindowSize(Console.LargestWindowWidth, Console.LargestWindowHeight);
-
+        {
             var p1 = GridDisplay.DrawGrid(3, 2);
-
-            //for (int i = 0; i < p1.GridSpaces.GetLength(0); i++)
-            //    for (int j = 0; j < p1.GridSpaces.GetLength(1); j++)
-            //        i.ToString().DrawAt(p1.GridSpaces[i,j].x, p1.GridSpaces[i,j].y);
-
-            GridDisplay.DrawGrid(p1.MaxX + 10, 2);
+            var p2 = GridDisplay.DrawGrid(p1.MaxX + 10, 2);
 
             var commandInput = new CommandInput(0, p1.MaxY + 3);
             commandInput.WaitForInput("Enter coords of Aircraft Carrier (Length 5), e.g. A0 A4");
         }
     }
+
+    public class SetupInput 
+    {
+        public void RunSetup()
+        {
+
+        }
+    }
+
     public class CommandInput
     {
         private readonly int m_X;
@@ -83,8 +83,8 @@ namespace Battleships.ConsoleApp
         private const int MAX_ROWS = 10;
         private const int MAX_COLS = 10;
 
-        private const int PER_CELL_X = 6;
-        private const int PER_CELL_Y = 4;
+        private const int PER_CELL_X = 5;
+        private const int PER_CELL_Y = 3;
 
         private static int CellMidX = PER_CELL_X / 2;
         private static int CellMidY = PER_CELL_Y / 2;
@@ -111,9 +111,20 @@ namespace Battleships.ConsoleApp
 
         public static PlayerGrid DrawGrid(int x, int y)
         {
-            var newY = DrawHeaderRow(x, y);
-            x = DrawHeaderCol(x, y);
-            y = newY;
+            var maxX = x + (PER_CELL_X*(MAX_COLS+1));
+            var maxY = y + (PER_CELL_Y*(MAX_ROWS+1));
+
+            // TODO: This is very rough fix for too small console. Need to redo to adjust per cell values to fit instead. And error if not enough space. Linux support etc.
+            if (maxX > Console.WindowWidth)
+                Console.WindowWidth = maxX + PER_CELL_X;
+            
+            if (maxX > Console.WindowHeight)
+                Console.WindowHeight = maxY + PER_CELL_Y + 3;
+
+            DrawHeaderRow(x, y);
+            DrawHeaderCol(x, y);
+            x += (PER_CELL_X-1);
+            y += (PER_CELL_Y-1);
 
             for (int i = 1; i <= MAX_ROWS; i++)
                 DrawGridRow(i, x, y);
@@ -135,7 +146,7 @@ namespace Battleships.ConsoleApp
             return new PlayerGrid(x+(PER_CELL_X*MAX_COLS)+1, y+(PER_CELL_Y*MAX_ROWS)+1, spaces);
         }
 
-        private static int DrawHeaderRow(int startX, int startY)
+        private static void DrawHeaderRow(int startX, int startY)
         {
             for (int i = 1; i <= MAX_COLS+1; i++)
             {
@@ -145,11 +156,9 @@ namespace Battleships.ConsoleApp
                 if (i > 1)
                     DrawAt((startX-1)+((i*PER_CELL_X)-CellMidX), (startY-1)+CellMidY, (i-2).AsUpperChar(), ConsoleColor.DarkGray);
             }
-
-            return startY += (PER_CELL_Y-1);
         }
         
-        private static int DrawHeaderCol(int startX, int startY)
+        private static void DrawHeaderCol(int startX, int startY)
         {
             for (int i = 1; i <= MAX_ROWS+1; i++)
             {
@@ -159,8 +168,6 @@ namespace Battleships.ConsoleApp
                 if (i > 1)
                     DrawAt((startX-1)+CellMidX, (startY-1)+((i*PER_CELL_Y)-CellMidY), (i-2).ToString(), ConsoleColor.DarkGray);
             }
-
-            return startX += (PER_CELL_X-1);
         }
 
         private static void DrawGridRow(int rowNumber, int startX, int startY)
