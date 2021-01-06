@@ -1,6 +1,5 @@
 ﻿using System.Linq;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace Battleships.GameEngine.Tests
 {
@@ -36,9 +35,10 @@ namespace Battleships.GameEngine.Tests
         public void SetupBoardValidIfAllShipsSet()
         {
             // When
-            m_SetupBoard.AddShip(("E0", "E4"));
+            var result = m_SetupBoard.AddShip(("E0", "E4"));
             
             // Then
+            Assert.True(result.Success);
             Assert.True(m_SetupBoard.IsValid);
         }
 
@@ -47,7 +47,7 @@ namespace Battleships.GameEngine.Tests
         [InlineData(4)]
         [InlineData(3)]
         [InlineData(2)]
-        public void SetupBoardNotValidIfTooManyShipsForLength(int length)
+        public void AddShipFailsIfTooManyShipsForLength(int length)
         {
             // Given          
             m_SetupBoard.AddShip(("E0", "E4"));
@@ -57,20 +57,44 @@ namespace Battleships.GameEngine.Tests
             Assert.Equal(length, excessShip.Length);
             
             // When
-            m_SetupBoard.AddShip(excessShip);
+            var result = m_SetupBoard.AddShip(excessShip);
 
             // Then
-            Assert.False(m_SetupBoard.IsValid);
+            Assert.False(result.Success);
+            Assert.Contains($"already enough ships of length {length}", result.Error);
         }
 
         [Fact]
-        public void SetupBoardNotValidIfShipsOverlap()
+        public void AddShipFailsIfIfShipsOverlap()
         {                        
             // When
-            m_SetupBoard.AddShip(("D3", "D7"));
+            var result = m_SetupBoard.AddShip(("D3", "D7"));
 
             // Then
-            Assert.False(m_SetupBoard.IsValid);
+            Assert.False(result.Success);
+            Assert.Contains("ship overlaps an existing ship", result.Error);
+        }
+
+        [Fact]
+        public void SetupBoardHasCorrectNextShipRequired()
+        {  
+            var setupBoard = new SetupBoard();
+            Assert.Equal(5, setupBoard.NextShip);
+                        
+            setupBoard.AddShip(("E0", "E4"));
+            Assert.Equal(4, setupBoard.NextShip);
+
+            setupBoard.AddShip(("D0", "D3"));
+            Assert.Equal(3, setupBoard.NextShip);
+
+            setupBoard.AddShip(("C0", "C2"));
+            Assert.Equal(3, setupBoard.NextShip);
+
+            setupBoard.AddShip(("B0", "B2"));
+            Assert.Equal(2, setupBoard.NextShip);
+
+            setupBoard.AddShip(("A0", "A1"));
+            Assert.Null(setupBoard.NextShip);
         }
 
         [Fact]

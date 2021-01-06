@@ -20,20 +20,37 @@ namespace Battleships.GameEngine
                 s_LengthShipsRequired.Select(kvp => new KeyValuePair<int, List<Ship>>(kvp.Key, new List<Ship>(kvp.Value))) // Init empty lists with required capacity
                 );
 
+        public int? NextShip
+        {
+            get
+            {
+                var missingShips = m_ShipsByLength.Where(s => s.Value.Count != s_LengthShipsRequired[s.Key]).Select(s => s.Key).ToList();
+                return !missingShips.Any() ? null : missingShips.Last(); // Last so biggest first
+            }
+        }
+
         public bool IsValid { get; private set; }
 
-        public Dictionary<Point, Ship> ShipsByOccupationPoints { get; } = new Dictionary<Point, Ship>(17);
+        public Dictionary<Point, Ship> ShipsByOccupationPoints { get; } = new Dictionary<Point, Ship>(17); // 17 is total ship squares
 
         public bool AllSunk => m_ShipsByLength.Values.SelectMany(ss => ss).All(s => s.IsSunk);
 
-        public void AddShip(Ship ship)
+        public AddShipResult AddShip(Ship ship)
         {
             // This checks for overlap but does not prevent
             var shipOverlaps = ShipOverlaps(ship);
-            RecordShip(ship, shipOverlaps);
+
+            if (shipOverlaps)
+                return new AddShipResult("This ship overlaps an existing ship.");                
+
+            if (m_ShipsByLength[ship.Length].Count == s_LengthShipsRequired[ship.Length])
+                return new AddShipResult($"There is already enough ships of length {ship.Length}.");   
+
+            RecordShip(ship);
+            return new AddShipResult();
         }
 
-        private void RecordShip(Ship ship, bool shipOverlaps)
+        private void RecordShip(Ship ship)
         {
             RecordOccupationPoints(ship);
             m_ShipsByLength[ship.Length].Add(ship);
@@ -41,8 +58,7 @@ namespace Battleships.GameEngine
             IsValid = m_ShipsByLength[2].Count == s_LengthShipsRequired[2] &&
                       m_ShipsByLength[3].Count == s_LengthShipsRequired[3] &&
                       m_ShipsByLength[4].Count == s_LengthShipsRequired[4] &&
-                      m_ShipsByLength[5].Count == s_LengthShipsRequired[5] &&
-                      !shipOverlaps;
+                      m_ShipsByLength[5].Count == s_LengthShipsRequired[5];
         }
         
         private bool ShipOverlaps(Ship ship)
@@ -68,7 +84,7 @@ namespace Battleships.GameEngine
                 for (int i = 1; i <= req.Value; i++)
                 {                    
                     var ship = GenerateValidShipOfLength(req.Key, coordGen);
-                    RecordShip(ship, false);
+                    RecordShip(ship);
                 }
             }
 
@@ -91,6 +107,23 @@ namespace Battleships.GameEngine
         {
             var (start, end) = random.GetRandomShipCoords(length);
             return new Ship(start, end);
+        }
+    }
+
+    public class AddShipResult
+    {
+        public bool Success { get; }
+        public string Error { get; }
+
+        public AddShipResult()
+        {
+            Success = true;
+        }
+
+        public AddShipResult(string error)
+        {
+            Success = false;
+            Error = error;
         }
     }
 }

@@ -1,5 +1,9 @@
-﻿using System;
+﻿using Battleships.GameEngine;
+using System;
+using System.Drawing;
 using System.Linq;
+using System.Text.RegularExpressions;
+using System.Threading;
 
 namespace Battleships.ConsoleApp
 {
@@ -10,16 +14,139 @@ namespace Battleships.ConsoleApp
             var p1 = GridDisplay.DrawGrid(3, 2);
             var p2 = GridDisplay.DrawGrid(p1.MaxX + 10, 2);
 
-            var commandInput = new CommandInput(0, p1.MaxY + 3);
-            commandInput.WaitForInput("Enter coords of Aircraft Carrier (Length 5), e.g. A0 A4");
+            var setupInput = new SetupInput(0, p1.MaxY + 3);
+            if (!setupInput.RunSetup(p1))
+                return;
+
+            var playInput = new PlayInput(0, p1.MaxY + 3);
+            playInput.RunPlay(setupInput.SetupBoard, p1, p2);
+
+            Console.SetCursorPosition(0, Console.CursorTop + 10);
+        }
+    }
+
+    public class PlayInput
+    {
+        private static Regex s_Regex = new Regex("^[A-Ja-j]{1}[0-9]{1}$");
+
+        private readonly CommandInput m_CommandInput;
+
+        public PlayInput(int x, int y)
+        {
+            m_CommandInput = new CommandInput(x, y);
+        }
+
+        public void RunPlay(SetupBoard setupBoard, PlayerGrid playerGrid, PlayerGrid computerGrid)
+        {
+            var game = new Game(setupBoard);
+            var error = string.Empty;
+
+            while (true)
+            {
+                // TODO: Add sound!
+
+                if (game.Turn == Players.PlayerOne)
+                {
+                    var errorDisplay = error.Length > 0 ? $" [{error}]" : "";
+                    var input = m_CommandInput.WaitForInput($"Enter a Target coordinate, e.g. A0{errorDisplay}");
+
+                    if (!s_Regex.IsMatch(input))
+                    {
+                        error = $"Input not recognised as a Target Coordinate '{input}'";
+                        continue;
+                    }
+
+                    FireResult fireResult;
+                    try
+                    {
+                        fireResult = game.Fire(input);
+                    }
+                    catch (ArgumentException ex)
+                    {
+                        error = ex.Message;
+                        continue;
+                    }
+
+                    computerGrid.DrawTarget(fireResult.Target.Point, fireResult.IsHit);
+                    m_CommandInput.ShowMessage(fireResult.IsSunkShip ? $"HIT {fireResult.Target}. YOU'VE SUNK A SHIP OF LENGTH {fireResult.ShipSunkSize}!" : fireResult.IsHit ? $"HIT {fireResult.Target}" : "Missed.");
+                    
+                    if (fireResult.HaveWon)
+                    {
+                        m_CommandInput.ShowResult("YOU WIN!!!");
+                        break;
+                    }
+                }
+                else
+                {
+                    var fireResult = game.OpponentsTurn();
+                    playerGrid.DrawTarget(fireResult.Target.Point, fireResult.IsHit);
+                    m_CommandInput.ShowMessage(fireResult.IsSunkShip ? $"Opponent Hits {fireResult.Target}. Has Sunk your {fireResult.ShipSunkSize}!" : fireResult.IsHit ? $"Opponent Hits {fireResult.Target}" : "Opponent Missed.");
+                    if (fireResult.HaveWon)
+                    {
+                        m_CommandInput.ShowResult("YOU LOSE!!!");
+                        break;
+                    }
+                }
+                    
+                Thread.Sleep(1000);
+            }
         }
     }
 
     public class SetupInput 
     {
-        public void RunSetup()
-        {
+        private static Regex s_Regex = new Regex("^[A-Ja-j]{1}[0-9]{1} [A-Ja-j]{1}[0-9]{1}$");
 
+        private readonly CommandInput m_CommandInput;
+
+        public SetupBoard SetupBoard { get; private set; }
+
+        public SetupInput(int x, int y)
+        {
+            m_CommandInput = new CommandInput(x, y);
+        }
+
+        public bool RunSetup(PlayerGrid playerGrid)
+        {
+            SetupBoard = new SetupBoard();
+            var error = string.Empty;
+
+            while (!SetupBoard.IsValid)
+            {                
+                var errorDisplay = error.Length > 0 ? $" [{error}]" : "";
+                var input = m_CommandInput.WaitForInput($"Enter coords of Ship length {SetupBoard.NextShip}, e.g. A0 A4{errorDisplay}");
+                // TODO: Note that you can enter in any order, so why ask?
+
+                if (input.ToLowerInvariant() == "exit")
+                    return false;
+
+                if (!s_Regex.IsMatch(input))
+                {
+                    error = $"Input not recognised as Ship Coordinates '{input}'";
+                    continue;
+                }
+
+                var coords = input.Split(' ');
+                Ship ship;
+                try
+                {
+                    ship = new Ship(coords[0], coords[1]);
+                }
+                catch (ArgumentException ex)
+                {
+                    error = ex.Message;
+                    continue;
+                }
+
+                var result = SetupBoard.AddShip(ship);
+
+                if (!result.Success)
+                    error = result.Error;
+                else 
+                    playerGrid.DrawShip(ship);                        
+            }
+
+            return true;
         }
     }
 
@@ -46,6 +173,20 @@ namespace Battleships.ConsoleApp
             return Console.ReadLine();
         }
 
+        public void ShowMessage(string message)
+        {
+            ClearRow(m_MessageY);
+            ClearRow(m_InputY);
+            message.DrawAt(0, m_MessageY);
+        }
+        
+        public void ShowResult(string message)
+        {
+            ClearRow(m_MessageY);
+            ClearRow(m_InputY);
+            message.DrawAt(0, m_InputY);
+        }
+
         private void ClearRow(int y)
         {
             for (int x = 0; x < Console.WindowWidth; x++)
@@ -55,6 +196,11 @@ namespace Battleships.ConsoleApp
 
     public class PlayerGrid
     {
+        const string _UNSUNK = "▒";
+        const string _SUNK = "🔴";
+        const string _HIT = "X";
+        const string _MISS = "O";
+
         public int MaxX { get; private set; }
         public int MaxY { get; private set; }
 
@@ -65,6 +211,21 @@ namespace Battleships.ConsoleApp
             MaxX = maxX;
             MaxY = maxY;
             GridSpaces = gridSpaces;
+        }
+
+        public void DrawShip(Ship ship)
+        {
+            foreach (var s in ship.Occupies)
+            {
+                var (x, y) = GridSpaces[s.X, s.Y];
+                _UNSUNK.DrawAt(x, y);
+            }
+        }
+
+        public void DrawTarget(Point target, bool isHit)
+        {
+            var (x, y) = GridSpaces[target.X, target.Y];
+            (isHit ? _SUNK : _MISS).DrawAt(x, y);
         }
     }
 

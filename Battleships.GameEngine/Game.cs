@@ -17,6 +17,7 @@ namespace Battleships.GameEngine
         
         public Game(SetupBoard setupBoard) : this(setupBoard, new SetupBoard().GenerateRandom())
         {
+            m_RandomCoordGenerator = new RandomCoordGenerator();
         }
 
         private Game(SetupBoard playerOneSetup, SetupBoard playerTwoSetup) 
@@ -58,7 +59,7 @@ namespace Battleships.GameEngine
 
             Turn = Players.PlayerOne;
 
-            var target = (GridSquare)m_RandomCoordGenerator.GetRandomCoord();
+            var target = (GridSquare)m_RandomCoordGenerator.GetRandomCoord(); // TODO: If last shot was a hit, should refine the search rather than random.
 
             return GetResult(target, m_PlayerOneSetup, m_PlayerTwoShots);
         }
@@ -77,7 +78,7 @@ namespace Battleships.GameEngine
             
             var haveWon = isSunk ? targetBoard.AllSunk : false;
 
-            return new FireResult(target, isSunk, isSunk ? hitShip.Length : null, haveWon);
+            return new FireResult(target, isSunk, isSunk ? hitShip.Length : null, haveWon); // TODO: Rather than length, send whole sunk ship so UI can update with different graphics.
         }
     }
 
