@@ -9,16 +9,19 @@ namespace Battleships.ConsoleApp
 {
     class Program
     {
+        private static int s_VertPadding = 1;
+        private static int s_HorizPadding = 3;
+
         static void Main(string[] args)
         {
-            var p1 = GridDisplay.DrawGrid(3, 2);
-            var p2 = GridDisplay.DrawGrid(p1.MaxX + 4, 2);
+            var p1 = GridDisplay.DrawGrid(s_HorizPadding, s_VertPadding);
+            var p2 = GridDisplay.DrawGrid(p1.MaxX + s_HorizPadding, s_VertPadding);
 
-            var setupInput = new SetupInput(p1.MaxY + 2);
+            var setupInput = new SetupInput(p1.MaxY + s_VertPadding);
             if (!setupInput.RunSetup(p1))
                 return;
 
-            var playInput = new PlayInput(p1.MaxY + 2);
+            var playInput = new PlayInput(p1.MaxY + s_VertPadding);
             playInput.RunPlay(setupInput.SetupBoard, p1, p2);
 
 #if DEBUG
@@ -68,6 +71,8 @@ namespace Battleships.ConsoleApp
                         error = ex.Message;
                         continue;
                     }
+
+                    error = string.Empty;
 
                     computerGrid.DrawTarget(fireResult.Target.Point, fireResult.IsHit);
                     m_CommandInput.ShowMessage(fireResult.IsSunkShip ? $"HIT {fireResult.Target}. YOU'VE SUNK A SHIP OF LENGTH {fireResult.ShipSunkSize}!" : fireResult.IsHit ? $"HIT {fireResult.Target}" : "Missed.");
@@ -140,6 +145,8 @@ namespace Battleships.ConsoleApp
                     continue;
                 }
 
+                error = string.Empty;
+
                 var result = SetupBoard.AddShip(ship);
 
                 if (!result.Success)
@@ -196,10 +203,14 @@ namespace Battleships.ConsoleApp
 
     public class PlayerGrid
     {
-        const string _UNSUNK = "▒";
-        const string _SUNK = "🔴";
-        const string _HIT = "X";
-        const string _MISS = "O";
+        private const string _UNSUNK = "▒";
+        private const string _SUNK = "🔴";
+        private const string _HIT = "X";
+        private const string _MISS = "o";
+        
+        private const ConsoleColor _SHIP_COLOUR = ConsoleColor.Blue;
+        private const ConsoleColor _HIT_COLOUR = ConsoleColor.Red;
+        private const ConsoleColor _MISS_COLOUR = ConsoleColor.DarkGray;
 
         public int MaxX { get; private set; }
         public int MaxY { get; private set; }
@@ -218,14 +229,14 @@ namespace Battleships.ConsoleApp
             foreach (var s in ship.Occupies)
             {
                 var (x, y) = GridSpaces[s.X, s.Y];
-                _UNSUNK.DrawAt(x, y);
+                _UNSUNK.DrawAt(x, y, _SHIP_COLOUR);
             }
         }
 
         public void DrawTarget(Point target, bool isHit)
         {
             var (x, y) = GridSpaces[target.X, target.Y];
-            (isHit ? _SUNK : _MISS).DrawAt(x, y);
+            (isHit ? _HIT : _MISS).DrawAt(x, y, isHit ? _HIT_COLOUR : _MISS_COLOUR);
         }
     }
 
