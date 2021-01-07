@@ -227,10 +227,25 @@ namespace Battleships.GameEngine.Tests
             Assert.True(result.Target.Y >= 0 && result.Target.Y <= 9);
         }
         
-        // TODO
-        [Fact(Skip = "Is this implemented in the random generator (to only return unique?) ?")]
+        [Fact]
         public void OpponentsTurnDoesNotFireAtSameGridSquareMoreThanOnce() 
         {
+            var randomCoordsToGenerate = new[] { "A0", "A0", "J9" };
+
+            // Given
+            m_Game = new Game(m_SetupBoard, m_OpponentSetupBoard, RandomReturn(randomCoordsToGenerate).Object);
+            m_Game.Fire("B4");
+            Assert.Equal(Players.PlayerTwo, m_Game.Turn);
+            var preResult = m_Game.OpponentsTurn();
+            Assert.Equal("A0", preResult.Target.ToString());
+            m_Game.Fire("B5");
+            Assert.Equal(Players.PlayerTwo, m_Game.Turn);
+
+            // When
+            var result = m_Game.OpponentsTurn();
+            
+            // Then
+            Assert.Equal("J9", result.Target.ToString());
         } 
                 
         [Theory]
@@ -317,7 +332,6 @@ namespace Battleships.GameEngine.Tests
                 m_Game.Fire(GetSequentialCoord(x));
             }
         }
-
 
         private static Mock<IRandomCoordGenerator> RandomReturn(params string[] coords)
         {

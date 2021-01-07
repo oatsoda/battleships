@@ -59,7 +59,11 @@ namespace Battleships.GameEngine
 
             Turn = Players.PlayerOne;
 
-            var target = (GridSquare)m_RandomCoordGenerator.GetRandomCoord(); // TODO: If last shot was a hit, should refine the search rather than random.
+            GridSquare target;
+            do {
+                target = m_RandomCoordGenerator.GetRandomCoord(); // TODO: If last shot was a hit, should refine the search rather than random.
+            } 
+            while (m_PlayerTwoShots[target.Point.X, target.Point.Y] != ShotState.NoShot);
 
             return GetResult(target, m_PlayerOneSetup, m_PlayerTwoShots);
         }
