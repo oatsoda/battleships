@@ -48,8 +48,6 @@ namespace Battleships.ConsoleApp
 
             while (true)
             {
-                // TODO: Add sound!
-
                 if (game.Turn == Players.PlayerOne)
                 {
                     var errorDisplay = error.Length > 0 ? $" [{error}]" : "";
@@ -89,7 +87,7 @@ namespace Battleships.ConsoleApp
 
                     if (fireResult.HaveWon)
                     {
-                        m_CommandInput.ShowResult("YOU WIN!!!");
+                        m_CommandInput.ShowResult("YOU WIN!!!", ConsoleColor.Green);
                         PlayWinSound();
                         break;
                     }
@@ -115,7 +113,7 @@ namespace Battleships.ConsoleApp
 
                     if (fireResult.HaveWon)
                     {
-                        m_CommandInput.ShowResult("YOU LOSE!!!");
+                        m_CommandInput.ShowResult("YOU LOSE!!!", ConsoleColor.Red);
                         PlayLoseSound();
                         break;
                     }
@@ -259,11 +257,11 @@ namespace Battleships.ConsoleApp
             message.DrawAt(0, m_MessageY);
         }
         
-        public void ShowResult(string message)
+        public void ShowResult(string message, ConsoleColor? text = null, ConsoleColor? bg = null)
         {
             ClearRow(m_MessageY);
             ClearRow(m_InputY);
-            message.DrawAt(0, m_InputY);
+            message.DrawAt(0, m_InputY, text, bg);
         }
 
         private void ClearRow(int y)
