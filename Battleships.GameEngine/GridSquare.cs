@@ -21,6 +21,13 @@ namespace Battleships.GameEngine
             Y = byte.Parse(coordinate[1].ToString());
             Point = new Point(X - 65, Y);
         }
+
+        internal GridSquare(Point point)
+        {
+            Point = point;
+            X = (char)(point.X+65);
+            Y = (byte)Point.Y;
+        }
         
         public static implicit operator GridSquare(string c) => new GridSquare(c);
 

@@ -152,15 +152,16 @@ namespace Battleships.ConsoleApp
 
         public static void PlaySunkSound()
         {
-            Console.Beep(900, 500);
-            Console.Beep(900, 500);
-            Console.Beep(900, 500);
+            Console.Beep(800, 500);
+            Console.Beep(800, 500);
+            Console.Beep(800, 500);
         }
         
         public static void PlayWinSound()
         {
-            Console.Beep(3000, 500);
-            Console.Beep(3000, 500);
+            Console.Beep(3000, 200);
+            Console.Beep(3000, 200);
+            Console.Beep(2500, 500);
             Console.Beep(4000, 500);
         }
         

@@ -1,5 +1,8 @@
 ﻿using Battleships.GameEngine.Random;
 using System;
+using System.Collections.Generic;
+using System.Drawing;
+using System.Linq;
 
 namespace Battleships.GameEngine
 {
@@ -13,6 +16,8 @@ namespace Battleships.GameEngine
         private readonly IRandomCoordGenerator m_RandomCoordGenerator;
 
         public Players Turn { get; private set; }
+
+        private List<Point> m_PlayerTwoUnsunkHits = new List<Point>();
         
         public Game(SetupBoard setupBoard) : this(setupBoard, new SetupBoard().GenerateRandom())
         {
@@ -60,11 +65,21 @@ namespace Battleships.GameEngine
 
             GridSquare target;
             do {
-                target = m_RandomCoordGenerator.GetRandomCoord(); // TODO: If last shot was a hit, should refine the search rather than random.
+                if (m_PlayerTwoUnsunkHits.Count == 0)
+                    target = m_RandomCoordGenerator.GetRandomCoord(); // TODO: If last shot was a hit, should refine the search rather than random.
+                else 
+                    target = CalculateNextKnownShipTarget();
             } 
             while (m_PlayerTwoShots[target.Point.X, target.Point.Y] != ShotState.NoShot);
 
-            return GetResult(target, m_PlayerOneSetup, m_PlayerTwoShots);
+            var result = GetResult(target, m_PlayerOneSetup, m_PlayerTwoShots);
+
+            if (result.IsSunkShip)
+                m_PlayerTwoUnsunkHits.Clear();
+            else if (result.IsHit)
+                m_PlayerTwoUnsunkHits.Add(result.Target.Point);
+
+            return result;
         }
 
         private static FireResult GetResult(GridSquare target, SetupBoard targetBoard, ShotState[,] shotRecorder)
@@ -82,6 +97,39 @@ namespace Battleships.GameEngine
             var haveWon = isSunk ? targetBoard.AllSunk : false;
 
             return new FireResult(target, isSunk, isSunk ? hitShip.Length : null, haveWon); // TODO: Rather than length, send whole sunk ship so UI can update with different graphics.
+        }
+
+        private GridSquare CalculateNextKnownShipTarget()
+        {
+            if (m_PlayerTwoUnsunkHits.Count == 0)
+                throw new InvalidOperationException("Can only calculate known ship targets if already hit but ship not sunk.");
+
+            // Could be non-rectangular.  Need to trace around the edge of all points somehow.
+            var ordered = m_PlayerTwoUnsunkHits.OrderBy(p => p.X).OrderBy(p => p.Y);
+
+            var potentials = new List<Point>();
+            foreach (var hit in m_PlayerTwoUnsunkHits)
+            {
+                potentials.AddRange(AdjacentPoints(hit));
+            }
+
+            potentials.RemoveAll(p => m_PlayerTwoUnsunkHits.Contains(p) || m_PlayerTwoShots[p.X, p.Y] != ShotState.NoShot);
+            return new GridSquare(potentials.First());
+        }
+
+        private static IEnumerable<Point> AdjacentPoints(Point point)
+        {
+            if (point.X > 0)
+                yield return new Point(point.X - 1, point.Y);
+
+            if (point.X < 9)
+                yield return new Point(point.X + 1, point.Y);
+            
+            if (point.Y > 0)
+                yield return new Point(point.X, point.Y - 1);
+
+            if (point.Y < 9)
+                yield return new Point(point.X, point.Y + 1);
         }
     }
 
