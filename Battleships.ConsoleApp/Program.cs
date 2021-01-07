@@ -80,10 +80,13 @@ namespace Battleships.ConsoleApp
                     if (fireResult.IsHit)
                         PlayHitSound();
 
-                    m_CommandInput.ShowMessage(fireResult.IsSunkShip ? $"HIT {fireResult.Target}. YOU'VE SUNK A SHIP OF LENGTH {fireResult.ShipSunkSize}!" : fireResult.IsHit ? $"HIT {fireResult.Target}" : "Missed.");
+                    m_CommandInput.ShowMessage(fireResult.IsSunkShip ? $"HIT {fireResult.Target}. YOU'VE SUNK A SHIP OF LENGTH {fireResult.ShipSunk.Length}!" : fireResult.IsHit ? $"HIT {fireResult.Target}" : "Missed.");
                     
                     if (fireResult.IsSunkShip)
+                    {
+                        computerGrid.DrawShip(fireResult.ShipSunk);
                         PlaySunkSound();
+                    }
 
                     if (fireResult.HaveWon)
                     {
@@ -93,6 +96,7 @@ namespace Battleships.ConsoleApp
                     }
                     else
                     {
+                        Thread.Sleep(1000);
                         m_CommandInput.ShowMessage("Incoming...");
                     }
                 }
@@ -106,10 +110,13 @@ namespace Battleships.ConsoleApp
                     if (fireResult.IsHit)
                         PlayHitSound();
 
-                    m_CommandInput.ShowMessage(fireResult.IsSunkShip ? $"Opponent Hits {fireResult.Target}. Has Sunk your {fireResult.ShipSunkSize}!" : fireResult.IsHit ? $"Opponent Hits {fireResult.Target}" : "Opponent Missed.");
+                    m_CommandInput.ShowMessage(fireResult.IsSunkShip ? $"Opponent Hits {fireResult.Target}. Has Sunk your {fireResult.ShipSunk.Length}!" : fireResult.IsHit ? $"Opponent Hits {fireResult.Target}" : "Opponent Missed.");
                     
                     if (fireResult.IsSunkShip)
+                    {
+                        playerGrid.DrawShip(fireResult.ShipSunk);
                         PlaySunkSound();
+                    }
 
                     if (fireResult.HaveWon)
                     {
@@ -117,9 +124,12 @@ namespace Battleships.ConsoleApp
                         PlayLoseSound();
                         break;
                     }
+                    else
+                    {                        
+                        Thread.Sleep(1000);   
+                    }
                 }     
-
-                Thread.Sleep(1000);               
+            
             }
         }
 
@@ -274,7 +284,7 @@ namespace Battleships.ConsoleApp
     public class PlayerGrid
     {
         private const string _UNSUNK = "▒";
-        private const string _SUNK = "🔴";
+        private const string _SUNK = "▓";
         private const string _HIT = "X";
         private const string _MISS = "o";
         
@@ -299,7 +309,7 @@ namespace Battleships.ConsoleApp
             foreach (var s in ship.Occupies)
             {
                 var (x, y) = GridSpaces[s.X, s.Y];
-                _UNSUNK.DrawAt(x, y, _SHIP_COLOUR);
+                (ship.IsSunk ? _SUNK : _UNSUNK).DrawAt(x, y, ship.IsSunk ? _HIT_COLOUR : _SHIP_COLOUR);
             }
         }
 

@@ -3,6 +3,7 @@ using Moq;
 using System;
 using System.Collections.Generic;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Battleships.GameEngine.Tests
 {
@@ -10,9 +11,10 @@ namespace Battleships.GameEngine.Tests
     {
         private readonly SetupBoard m_SetupBoard = new SetupBoard();
         private readonly SetupBoard m_OpponentSetupBoard = new SetupBoard();
+        private readonly ITestOutputHelper m_TestOutputHelper;
         private Game m_Game;
 
-        public GameTests()
+        public GameTests(ITestOutputHelper testOutputHelper)
         {
             m_SetupBoard.AddShip(("A0", "A1"));
             m_SetupBoard.AddShip(("B0", "B2"));
@@ -27,6 +29,7 @@ namespace Battleships.GameEngine.Tests
             m_OpponentSetupBoard.AddShip(("J5", "J9"));
 
             m_Game = new Game(m_SetupBoard, m_OpponentSetupBoard, new RandomCoordGenerator());
+            m_TestOutputHelper = testOutputHelper;
         }
 
         [Fact]
@@ -165,12 +168,21 @@ namespace Battleships.GameEngine.Tests
                 if (++x != coords.Length)
                 {
                     Assert.False(result.IsSunkShip);
-                    Assert.Null(result.ShipSunkSize);
+                    Assert.Null(result.ShipSunk);
                 }
                 else
                 {
                     Assert.Equal(expectedSunk, result.IsSunkShip);
-                    Assert.Equal(expectedSunkSize, result.ShipSunkSize);
+                    if (!expectedSunk)
+                    {
+                        Assert.False(result.IsSunkShip);
+                        Assert.Null(result.ShipSunk);
+                    }
+                    else
+                    {
+                        Assert.NotNull(result.ShipSunk);
+                        Assert.Equal(expectedSunkSize, result.ShipSunk.Length);
+                    }
                 }
                 m_Game.OpponentsTurn();
             }
@@ -288,6 +300,56 @@ namespace Battleships.GameEngine.Tests
             var nextResult = PlayTurn(sunkAfter.Value + 1);
             Assert.Equal("J7", nextResult.Target.ToString());
         }
+        
+        [Fact(Skip = "Doesn't work because if sinks first ship never having hit second, will just move on. Can't force it to hit both first.")]
+        public void OpponentsTurnFinishesOffAdjacentShipsIfFound()
+        {
+            // Given
+            var setupBoard = new SetupBoard();
+            setupBoard.AddShip(("A0", "A4"));
+            setupBoard.AddShip(("A5", "A8"));
+            setupBoard.AddShip(("B0", "B2"));
+            setupBoard.AddShip(("G5", "G7"));
+            setupBoard.AddShip(("G3", "G4"));
+            
+            m_Game = new Game(setupBoard, m_OpponentSetupBoard, RandomReturn("G3", "J7").Object);
+            
+            m_Game.Fire("A0");
+            Assert.Equal(Players.PlayerTwo, m_Game.Turn);
+            var preResult = m_Game.OpponentsTurn();
+            Assert.True(preResult.IsHit);
+
+            FireResult PlayTurn(int turnNumber)
+            {
+                m_Game.Fire(GetSequentialCoord(turnNumber));
+                var r = m_Game.OpponentsTurn();
+                m_TestOutputHelper.WriteLine($"Fired at {r.Target}. Hit: {r.IsHit} Sunk: {r.IsSunkShip}");
+                return r;
+            }
+
+            // When
+            const int expectedBothSunkWithinTurns = 17;
+            var firstSunk = false;
+            int? sunkAfter = null;
+            for (var x = 1; x <= expectedBothSunkWithinTurns;x++)
+            {   
+                if (PlayTurn(x).IsSunkShip)
+                {
+                    if (!firstSunk)
+                    {
+                        firstSunk = true;
+                        continue;
+                    }
+
+                    sunkAfter = x;
+                    break;
+                }
+            }
+
+            // Then
+            Assert.NotNull(sunkAfter);
+            Assert.True(sunkAfter <= expectedBothSunkWithinTurns);
+        }
                 
         [Theory]
         [InlineData("F6", false)]
@@ -330,12 +392,21 @@ namespace Battleships.GameEngine.Tests
                 if (++x != coords.Length)
                 {
                     Assert.False(result.IsSunkShip);
-                    Assert.Null(result.ShipSunkSize);
+                    Assert.Null(result.ShipSunk);
                 }
                 else
                 {
                     Assert.Equal(expectedSunk, result.IsSunkShip);
-                    Assert.Equal(expectedSunkSize, result.ShipSunkSize);
+                    if (!expectedSunk)
+                    {
+                        Assert.False(result.IsSunkShip);
+                        Assert.Null(result.ShipSunk);
+                    }
+                    else
+                    {
+                        Assert.NotNull(result.ShipSunk);
+                        Assert.Equal(expectedSunkSize, result.ShipSunk.Length);
+                    }
                 }
                 m_Game.Fire(GetSequentialCoord(x));
             }

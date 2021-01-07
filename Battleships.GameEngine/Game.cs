@@ -66,16 +66,16 @@ namespace Battleships.GameEngine
             GridSquare target;
             do {
                 if (m_PlayerTwoUnsunkHits.Count == 0)
-                    target = m_RandomCoordGenerator.GetRandomCoord(); // TODO: If last shot was a hit, should refine the search rather than random.
+                    target = m_RandomCoordGenerator.GetRandomCoord();
                 else 
-                    target = CalculateNextKnownShipTarget();
+                    target = CalculateNextKnownShipTarget(); // If have hit but not yet sunk, zero in on same area
             } 
             while (m_PlayerTwoShots[target.Point.X, target.Point.Y] != ShotState.NoShot);
 
             var result = GetResult(target, m_PlayerOneSetup, m_PlayerTwoShots);
 
             if (result.IsSunkShip)
-                m_PlayerTwoUnsunkHits.Clear();
+                m_PlayerTwoUnsunkHits.RemoveAll(p => result.ShipSunk.Occupies.Contains(p));
             else if (result.IsHit)
                 m_PlayerTwoUnsunkHits.Add(result.Target.Point);
 
@@ -96,7 +96,7 @@ namespace Battleships.GameEngine
             
             var haveWon = isSunk ? targetBoard.AllSunk : false;
 
-            return new FireResult(target, isSunk, isSunk ? hitShip.Length : null, haveWon); // TODO: Rather than length, send whole sunk ship so UI can update with different graphics.
+            return new FireResult(target, isSunk, isSunk ? hitShip : null, haveWon);
         }
 
         private GridSquare CalculateNextKnownShipTarget()
@@ -138,7 +138,7 @@ namespace Battleships.GameEngine
         public GridSquare Target { get; }
         public bool IsHit { get; }
         public bool IsSunkShip { get; }
-        public int? ShipSunkSize { get; }
+        public Ship ShipSunk { get; }
         public bool HaveWon { get; set; }
 
         public FireResult(GridSquare targetMissed)
@@ -146,12 +146,12 @@ namespace Battleships.GameEngine
             Target = targetMissed;
         }
 
-        public FireResult(GridSquare targetHit, bool isSunkShip, int? sizeIfSunk, bool haveWon)
+        public FireResult(GridSquare targetHit, bool isSunkShip, Ship shipIfSunk, bool haveWon)
         {
             Target = targetHit;
             IsHit = true;
             IsSunkShip = isSunkShip;
-            ShipSunkSize = sizeIfSunk;
+            ShipSunk = shipIfSunk;
             HaveWon = haveWon;
         }
     }
