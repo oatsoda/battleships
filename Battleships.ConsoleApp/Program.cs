@@ -14,6 +14,8 @@ namespace Battleships.ConsoleApp
 
         static void Main(string[] args)
         {
+            Console.Clear();
+
             var p1 = GridDisplay.DrawGrid(s_HorizPadding, s_VertPadding);
             var p2 = GridDisplay.DrawGrid(p1.MaxX + s_HorizPadding, s_VertPadding);
 
