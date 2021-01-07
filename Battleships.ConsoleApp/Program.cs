@@ -61,6 +61,9 @@ namespace Battleships.ConsoleApp
                         continue;
                     }
 
+                    PlayFireSound();
+                    m_CommandInput.ShowMessage($"Firing on {input.ToUpper()}...");
+
                     FireResult fireResult;
                     try
                     {
@@ -75,28 +78,96 @@ namespace Battleships.ConsoleApp
                     error = string.Empty;
 
                     computerGrid.DrawTarget(fireResult.Target.Point, fireResult.IsHit);
+
+                    if (fireResult.IsHit)
+                        PlayHitSound();
+
                     m_CommandInput.ShowMessage(fireResult.IsSunkShip ? $"HIT {fireResult.Target}. YOU'VE SUNK A SHIP OF LENGTH {fireResult.ShipSunkSize}!" : fireResult.IsHit ? $"HIT {fireResult.Target}" : "Missed.");
                     
+                    if (fireResult.IsSunkShip)
+                        PlaySunkSound();
+
                     if (fireResult.HaveWon)
                     {
                         m_CommandInput.ShowResult("YOU WIN!!!");
+                        PlayWinSound();
                         break;
+                    }
+                    else
+                    {
+                        m_CommandInput.ShowMessage("Incoming...");
                     }
                 }
                 else
                 {
+                    PlayIncomingSound();
+
                     var fireResult = game.OpponentsTurn();
                     playerGrid.DrawTarget(fireResult.Target.Point, fireResult.IsHit);
+
+                    if (fireResult.IsHit)
+                        PlayHitSound();
+
                     m_CommandInput.ShowMessage(fireResult.IsSunkShip ? $"Opponent Hits {fireResult.Target}. Has Sunk your {fireResult.ShipSunkSize}!" : fireResult.IsHit ? $"Opponent Hits {fireResult.Target}" : "Opponent Missed.");
+                    
+                    if (fireResult.IsSunkShip)
+                        PlaySunkSound();
+
                     if (fireResult.HaveWon)
                     {
                         m_CommandInput.ShowResult("YOU LOSE!!!");
+                        PlayLoseSound();
                         break;
                     }
-                }
-                    
-                Thread.Sleep(1000);
+                }     
+
+                Thread.Sleep(1000);               
             }
+        }
+
+        public static void PlayFireSound() => PlayFireScale(true);
+        public static void PlayIncomingSound() => PlayFireScale(false);
+        
+        private static void PlayFireScale(bool up)
+        {
+            const int MIN_FREQ = 1000;
+            const int INT_FREQ = 500;
+            const int LENGTH = 1000;
+            const int INTERVALS = 5;
+            const int MAX_FREQ = MIN_FREQ + (INTERVALS * INT_FREQ);
+            var perInterval = LENGTH / INTERVALS;
+            for (int i = 0; i < INTERVALS; i++)
+            {
+                if (up)
+                    Console.Beep(MIN_FREQ + (i * INT_FREQ), perInterval);
+                else 
+                    Console.Beep(MAX_FREQ - (i * INT_FREQ), perInterval);
+            }
+        }
+        
+        public static void PlayHitSound()
+        {
+            Console.Beep(750, 500);
+        }
+
+        public static void PlaySunkSound()
+        {
+            Console.Beep(900, 500);
+            Console.Beep(900, 500);
+            Console.Beep(900, 500);
+        }
+        
+        public static void PlayWinSound()
+        {
+            Console.Beep(3000, 500);
+            Console.Beep(3000, 500);
+            Console.Beep(4000, 500);
+        }
+        
+        public static void PlayLoseSound()
+        {
+            Console.Beep(2000, 500);
+            Console.Beep(1000, 500);
         }
     }
 

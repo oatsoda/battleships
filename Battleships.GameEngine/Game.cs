@@ -5,7 +5,6 @@ namespace Battleships.GameEngine
 {
     public class Game
     {
-        // TODO: Expose shot grids? Readonly 2d arrays?
         private readonly SetupBoard m_PlayerOneSetup;
         private readonly ShotState[,] m_PlayerOneShots = new ShotState[10, 10];
 
