@@ -12,16 +12,18 @@ namespace Battleships.ConsoleApp
         static void Main(string[] args)
         {
             var p1 = GridDisplay.DrawGrid(3, 2);
-            var p2 = GridDisplay.DrawGrid(p1.MaxX + 10, 2);
+            var p2 = GridDisplay.DrawGrid(p1.MaxX + 4, 2);
 
-            var setupInput = new SetupInput(0, p1.MaxY + 3);
+            var setupInput = new SetupInput(p1.MaxY + 2);
             if (!setupInput.RunSetup(p1))
                 return;
 
-            var playInput = new PlayInput(0, p1.MaxY + 3);
+            var playInput = new PlayInput(p1.MaxY + 2);
             playInput.RunPlay(setupInput.SetupBoard, p1, p2);
 
+#if DEBUG
             Console.SetCursorPosition(0, Console.CursorTop + 10);
+#endif
         }
     }
 
@@ -31,9 +33,9 @@ namespace Battleships.ConsoleApp
 
         private readonly CommandInput m_CommandInput;
 
-        public PlayInput(int x, int y)
+        public PlayInput(int y)
         {
-            m_CommandInput = new CommandInput(x, y);
+            m_CommandInput = new CommandInput(y);
         }
 
         public void RunPlay(SetupBoard setupBoard, PlayerGrid playerGrid, PlayerGrid computerGrid)
@@ -101,9 +103,9 @@ namespace Battleships.ConsoleApp
 
         public SetupBoard SetupBoard { get; private set; }
 
-        public SetupInput(int x, int y)
+        public SetupInput(int y)
         {
-            m_CommandInput = new CommandInput(x, y);
+            m_CommandInput = new CommandInput(y);
         }
 
         public bool RunSetup(PlayerGrid playerGrid)
@@ -152,13 +154,11 @@ namespace Battleships.ConsoleApp
 
     public class CommandInput
     {
-        private readonly int m_X;
         private readonly int m_MessageY;
         private readonly int m_InputY;
 
-        public CommandInput(int x, int y)
+        public CommandInput(int y)
         {
-            m_X = x;
             m_MessageY = y;
             m_InputY = y+1;
         }
@@ -244,8 +244,8 @@ namespace Battleships.ConsoleApp
         private const int MAX_ROWS = 10;
         private const int MAX_COLS = 10;
 
-        private const int PER_CELL_X = 5;
-        private const int PER_CELL_Y = 3;
+        private const int PER_CELL_X = 4;
+        private const int PER_CELL_Y = 2;
 
         private static int CellMidX = PER_CELL_X / 2;
         private static int CellMidY = PER_CELL_Y / 2;
