@@ -92,8 +92,9 @@ namespace Battleships.ConsoleApp
 
                     if (fireResult.HaveWon)
                     {
-                        m_CommandInput.ShowResult("YOU WIN!!!", ConsoleColor.Green);
+                        m_CommandInput.ShowMessage("YOU WIN!!!", ConsoleColor.Green);
                         PlayWinSound();
+                        m_CommandInput.WaitForInput("YOU WIN!!!       (Press Enter to exit)", ConsoleColor.Green);
                         break;
                     }
                     else
@@ -122,8 +123,9 @@ namespace Battleships.ConsoleApp
 
                     if (fireResult.HaveWon)
                     {
-                        m_CommandInput.ShowResult("YOU LOSE!!!", ConsoleColor.Red);
+                        m_CommandInput.ShowMessage("YOU LOSE :(", ConsoleColor.Red);
                         PlayLoseSound();
+                        m_CommandInput.WaitForInput("YOU LOSE :(       (Press Enter to exit)", ConsoleColor.Red);
                         break;
                     }
                     else
@@ -133,6 +135,7 @@ namespace Battleships.ConsoleApp
                 }     
             
             }
+
         }
 
         public static void PlayFireSound() => PlayFireScale(true);
@@ -252,35 +255,29 @@ namespace Battleships.ConsoleApp
             m_InputY = y+1;
         }
 
-        public string WaitForInput(string message)
+        public string WaitForInput(string message, ConsoleColor? text = null, ConsoleColor? bg = null)
         {
             ClearRow(m_MessageY);
             ClearRow(m_InputY);
-            message.DrawAt(0, m_MessageY);
+            message.DrawAt(0, m_MessageY, text, bg);
             ">".DrawAt(0, m_InputY);
             Console.SetCursorPosition(2, m_InputY);
             return Console.ReadLine();
         }
 
-        public void ShowMessage(string message)
+        public void ShowMessage(string message, ConsoleColor? text = null, ConsoleColor? bg = null)
         {
             ClearRow(m_MessageY);
             ClearRow(m_InputY);
-            message.DrawAt(0, m_MessageY);
+            message.DrawAt(0, m_MessageY, text, bg);
         }
         
-        public void ShowResult(string message, ConsoleColor? text = null, ConsoleColor? bg = null)
-        {
-            ClearRow(m_MessageY);
-            ClearRow(m_InputY);
-            message.DrawAt(0, m_InputY, text, bg);
-        }
-
         private void ClearRow(int y)
         {
             for (int x = 0; x < Console.WindowWidth; x++)
                 " ".DrawAt(x, y);            
         }
+        
     }
 
     public class PlayerGrid
