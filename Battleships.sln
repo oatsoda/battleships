@@ -9,6 +9,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Battleships.GameEngine", "B
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Battleships.GameEngine.Tests", "Battleships.GameEngine.Tests\Battleships.GameEngine.Tests.csproj", "{04A11D15-923C-4F9E-8561-EC229EB9DF25}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Battleships.ProgWebAppBlazor", "Battleships.ProgWebAppBlazor\Battleships.ProgWebAppBlazor.csproj", "{B95DD4E4-EA6A-4ECA-8E98-2AF9755B094E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{04A11D15-923C-4F9E-8561-EC229EB9DF25}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{04A11D15-923C-4F9E-8561-EC229EB9DF25}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{04A11D15-923C-4F9E-8561-EC229EB9DF25}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B95DD4E4-EA6A-4ECA-8E98-2AF9755B094E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B95DD4E4-EA6A-4ECA-8E98-2AF9755B094E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B95DD4E4-EA6A-4ECA-8E98-2AF9755B094E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B95DD4E4-EA6A-4ECA-8E98-2AF9755B094E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

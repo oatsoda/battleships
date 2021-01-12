@@ -1,0 +1,15 @@
+﻿@using System.Drawing; 
+
+<td>@value</td>
+
+@code {
+    [Parameter]
+    public Point Coord { get; set; }
+
+    [Parameter]
+    public CellState State { get; set; }
+
+    private string value => State == CellState.PlacedShip 
+                                        ? "S"
+                                        : "";
+}

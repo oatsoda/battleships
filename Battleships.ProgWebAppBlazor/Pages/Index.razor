@@ -1,0 +1,106 @@
+﻿@page "/"
+@using Battleships.ProgWebAppBlazor.Components
+@using Battleships.GameEngine
+@using System.Text.RegularExpressions
+@using System.Drawing;
+
+<h1>Battleships</h1>
+
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th></th>
+            <th>A</th>
+            <th>B</th>
+            <th>C</th>
+            <th>D</th>
+            <th>E</th>
+            <th>F</th>
+            <th>G</th>
+            <th>H</th>
+            <th>I</th>
+            <th>J</th>
+        </tr>
+    </thead>
+    <tbody>
+        @for (int y = 0; y < 10; y++)
+        {
+            <tr>
+                <th>@y</th>
+                @for (int x = 0; x < 10; x++)
+                {
+                    var p = new Point(x,y);
+                    <GridCell Coord=@p State=@m_Grid.Grid[p] />
+                }
+            </tr>
+        }
+    </tbody>
+</table>
+
+<div>Enter coords of Ship: <input type="text" maxlength="5" value=@m_Input @oninput="InputChange" />
+    <div hidden=@m_IsValid class="alert alert-danger">@m_ValidationError</div>
+</div>
+
+<div>
+    <button @onclick="AddShip">@m_ButtonText</button>
+</div>
+
+@code {
+
+    private static Regex s_Regex = new Regex("^[A-Ja-j]{1}[0-9]{1} [A-Ja-j]{1}[0-9]{1}$");
+
+    private GridState m_Grid = new GridState();
+
+    private SetupBoard m_SetupBoard = new SetupBoard();
+
+    private string m_Input;
+    private bool m_IsValid => string.IsNullOrEmpty(m_ValidationError);
+    private string m_ValidationError;
+    private string m_ButtonText = "Add Ship";
+
+    private void InputChange(ChangeEventArgs args)
+    {
+        m_Input = (string)args.Value;
+    }
+
+    private void AddShip()
+    {
+        if (!s_Regex.IsMatch(m_Input))
+        {
+            m_ValidationError = $"Ship entry should be in the format 'A0 A5'.  You entered '{m_Input}'";
+        }
+        else
+        {
+
+            var coords = m_Input.Split(' ');
+            Ship ship;
+            try
+            {
+                ship = new Ship(coords[0], coords[1]);
+            }
+            catch (ArgumentException ex)
+            {
+                m_ValidationError = ex.Message;
+                return;
+            }
+
+
+            var result = m_SetupBoard.AddShip(ship);
+
+            if (!result.Success)
+            {
+                m_ValidationError = result.Error;
+                return;
+            }
+
+            m_Grid.DrawShip(ship);
+            m_ValidationError = string.Empty;
+            m_Input = string.Empty;
+        }
+
+
+    }
+
+    //var c = (GridSquare)$"{(char)(x + 65)}{y}";
+}
+
