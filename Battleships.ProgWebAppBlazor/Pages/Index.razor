@@ -37,21 +37,48 @@
     </tbody>
 </table>
 
-<div>Enter coords of Ship: <input type="text" maxlength="5" value=@m_Input @oninput="InputChange" />
-    <div hidden=@m_IsValid class="alert alert-danger">@m_ValidationError</div>
-</div>
+<p>Enter your five ships (1 x 5 length, 1 x 4 length, 2 x 3 length and 1 x 2 length) in the format 'start end', e.g. 'A0 A5'.</p>
 
-<div>
-    <button @onclick="AddShip">@m_ButtonText</button>
-</div>
+<EditForm Model=@SetupShips OnValidSubmit=@ValidFormSubmitted>
+    <DataAnnotationsValidator />
+    <div class="form-group">
+        <label for="Name">Ship One</label>
+        <InputText @bind-Value=SetupShips.ShipOne class="form-control" id="ShipOne" @onblur=InputBlur />
+        <ValidationMessage For="() => SetupShips.ShipOne" />
+    </div>
+    <div class="form-group">
+        <label for="Name">Ship Two</label>
+        <InputText @bind-Value=SetupShips.ShipTwo class="form-control" id="ShipTwo" @onblur=InputBlur />
+        <ValidationMessage For="() => SetupShips.ShipTwo" />
+    </div>
+    <div class="form-group">
+        <label for="Name">Ship Three</label>
+        <InputText @bind-Value=SetupShips.ShipThree class="form-control" id="ShipThree" @onblur=InputBlur />
+        <ValidationMessage For="() => SetupShips.ShipThree" />
+    </div>
+    <div class="form-group">
+        <label for="Name">Ship Four</label>
+        <InputText @bind-Value=SetupShips.ShipFour class="form-control" id="ShipFour" @onblur=InputBlur />
+        <ValidationMessage For="() => SetupShips.ShipFour" />
+    </div>
+    <div class="form-group">
+        <label for="Name">Ship Five</label>
+        <InputText @bind-Value=SetupShips.ShipFive class="form-control" id="ShipFive" @onblur=InputBlur />
+        <ValidationMessage For="() => SetupShips.ShipFive" />
+    </div>
+    <input type="submit" class="btn btn-primary" value="Play" />
+</EditForm>
+
 
 @code {
+
+    private SetupShips SetupShips = new SetupShips();
 
     private static Regex s_Regex = new Regex("^[A-Ja-j]{1}[0-9]{1} [A-Ja-j]{1}[0-9]{1}$");
 
     private GridState m_Grid = new GridState();
 
-    private SetupBoard m_SetupBoard = new SetupBoard();
+    private SetupBoard m_SetupBoard;
 
     private string m_Input;
     private bool m_IsValid => string.IsNullOrEmpty(m_ValidationError);
@@ -61,6 +88,30 @@
     private void InputChange(ChangeEventArgs args)
     {
         m_Input = (string)args.Value;
+    }
+
+    private void InputBlur(FocusEventArgs args) => DisplayShips();
+
+    private void DisplayShips()
+    {
+        m_Grid.Clear();
+
+        foreach (var ship in SetupShips.GetValidStructuralShips())
+            m_Grid.DrawShip(ship.ship);
+    }
+
+    void ValidFormSubmitted(EditContext editContext)
+    {
+        DisplayShips();
+
+        //for (int i = 1; i <= 5; i++)
+        //{
+        //    var coords = SetupShips.GetShip(i).Split(' ');
+        //    var ship = new Ship(coords[0], coords[1]);
+
+        //    //var result = m_SetupBoard.AddShip(ship);
+        //    m_Grid.DrawShip(ship);
+        //}
     }
 
     private void AddShip()
