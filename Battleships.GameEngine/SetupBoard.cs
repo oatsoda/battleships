@@ -33,7 +33,10 @@ namespace Battleships.GameEngine
 
         public Dictionary<Point, Ship> ShipsByOccupationPoints { get; } = new Dictionary<Point, Ship>(17); // 17 is total ship squares
 
+        // TODO: No tests on this and probably in wrong place as it isn't setup, it's play
         public bool AllSunk => m_ShipsByLength.Values.SelectMany(ss => ss).All(s => s.IsSunk);
+
+        #region Add Ship Manually
 
         public AddShipResult AddShip(Ship ship)
         {
@@ -72,6 +75,10 @@ namespace Battleships.GameEngine
                 ShipsByOccupationPoints[p] = ship;
         }
 
+        #endregion
+
+        #region Create Random Ships
+
         public SetupBoard GenerateRandom()
         {
             if (m_ShipsByLength.Values.Any(ss => ss.Count > 0))
@@ -108,6 +115,21 @@ namespace Battleships.GameEngine
             var (start, end) = random.GetRandomShipCoords(length);
             return new Ship(start, end);
         }
+
+        #endregion
+
+        #region Reset
+
+        public void Reset()
+        {
+            IsValid = false;
+            ShipsByOccupationPoints.Clear();
+
+            foreach (var shipList in m_ShipsByLength.Values)
+                shipList.Clear();
+        }
+
+        #endregion
     }
 
     public class AddShipResult

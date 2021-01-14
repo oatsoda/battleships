@@ -155,6 +155,8 @@ namespace Battleships.ProgWebAppBlazor
         }
     }
 
+    /* THIS IS ALL A BIT HACKY AND NEEDS REWORK */
+
     // Valid length and not diagonal
     public class ShipCoordsValidAttribute : ValidationAttribute
     {

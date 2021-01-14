@@ -76,13 +76,13 @@
 
     private GridState m_Grid = new GridState();
 
-    private SetupBoard m_SetupBoard;
+    private SetupBoard m_SetupBoard = new SetupBoard();
 
     private void InputBlur(FocusEventArgs args) => DisplayShips();
 
     private void DisplayShips(bool assumeValid = false)
     {
-        m_SetupBoard = new SetupBoard();
+        m_SetupBoard.Reset();
         m_Grid.Clear();
 
         foreach (var ship in SetupShips.GetValidStructuralShips())

@@ -113,5 +113,22 @@ namespace Battleships.GameEngine.Tests
             Assert.True(setupBoardTwo.IsValid);
             Assert.False(setupBoardOne.ShipsByOccupationPoints.Keys.All(p => setupBoardTwo.ShipsByOccupationPoints.ContainsKey(p)));
         }
+
+        [Fact]
+        public void ResetClearsAllShips()
+        {
+            // Given          
+            m_SetupBoard.AddShip(("E0", "E4"));
+            Assert.True(m_SetupBoard.IsValid);
+            Assert.Null(m_SetupBoard.NextShip);
+
+            // When
+            m_SetupBoard.Reset();
+
+            // Then
+            Assert.False(m_SetupBoard.IsValid);
+            Assert.Equal(5, m_SetupBoard.NextShip);
+            Assert.Empty(m_SetupBoard.ShipsByOccupationPoints);
+        }
     }
 }
