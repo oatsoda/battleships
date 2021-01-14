@@ -66,7 +66,7 @@
         <InputText @bind-Value=SetupShips.ShipFive class="form-control" id="ShipFive" @onblur=InputBlur />
         <ValidationMessage For="() => SetupShips.ShipFive" />
     </div>
-    <input type="submit" class="btn btn-primary" value="Play" />
+    <input type="submit" class="btn btn-primary" value="Start Game" />
 </EditForm>
 
 
@@ -74,21 +74,9 @@
 
     private SetupShips SetupShips = new SetupShips();
 
-    private static Regex s_Regex = new Regex("^[A-Ja-j]{1}[0-9]{1} [A-Ja-j]{1}[0-9]{1}$");
-
     private GridState m_Grid = new GridState();
 
     private SetupBoard m_SetupBoard;
-
-    private string m_Input;
-    private bool m_IsValid => string.IsNullOrEmpty(m_ValidationError);
-    private string m_ValidationError;
-    private string m_ButtonText = "Add Ship";
-
-    private void InputChange(ChangeEventArgs args)
-    {
-        m_Input = (string)args.Value;
-    }
 
     private void InputBlur(FocusEventArgs args) => DisplayShips();
 
@@ -110,45 +98,5 @@
         DisplayShips(true);
 
     }
-
-    private void AddShip()
-    {
-        if (!s_Regex.IsMatch(m_Input))
-        {
-            m_ValidationError = $"Ship entry should be in the format 'A0 A5'.  You entered '{m_Input}'";
-        }
-        else
-        {
-
-            var coords = m_Input.Split(' ');
-            Ship ship;
-            try
-            {
-                ship = new Ship(coords[0], coords[1]);
-            }
-            catch (ArgumentException ex)
-            {
-                m_ValidationError = ex.Message;
-                return;
-            }
-
-
-            var result = m_SetupBoard.AddShip(ship);
-
-            if (!result.Success)
-            {
-                m_ValidationError = result.Error;
-                return;
-            }
-
-            m_Grid.DrawShip(ship);
-            m_ValidationError = string.Empty;
-            m_Input = string.Empty;
-        }
-
-
-    }
-
-    //var c = (GridSquare)$"{(char)(x + 65)}{y}";
 }
 
