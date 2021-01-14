@@ -92,26 +92,23 @@
 
     private void InputBlur(FocusEventArgs args) => DisplayShips();
 
-    private void DisplayShips()
+    private void DisplayShips(bool assumeValid = false)
     {
+        m_SetupBoard = new SetupBoard();
         m_Grid.Clear();
 
         foreach (var ship in SetupShips.GetValidStructuralShips())
+        {
             m_Grid.DrawShip(ship.ship);
+            if (assumeValid)
+                m_SetupBoard.AddShip(ship.ship);
+        }
     }
 
     void ValidFormSubmitted(EditContext editContext)
     {
-        DisplayShips();
+        DisplayShips(true);
 
-        //for (int i = 1; i <= 5; i++)
-        //{
-        //    var coords = SetupShips.GetShip(i).Split(' ');
-        //    var ship = new Ship(coords[0], coords[1]);
-
-        //    //var result = m_SetupBoard.AddShip(ship);
-        //    m_Grid.DrawShip(ship);
-        //}
     }
 
     private void AddShip()
