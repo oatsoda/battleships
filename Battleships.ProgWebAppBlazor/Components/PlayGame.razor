@@ -1,0 +1,132 @@
+﻿@using Battleships.GameEngine;
+@using System.Drawing;
+
+@if (Game != null)
+{
+    <h2>@TurnDesc</h2>
+
+    <GameMessage Type=@MsgType Message=@Msg />
+}
+
+@code {
+
+    [Parameter]
+    public GridState PlayerGridState { get; set; }
+
+    [Parameter]
+    public GridState ComputerGridState { get; set; }
+
+    [Parameter]
+    public Game Game { get; set; }
+
+    [Parameter]
+    public Action OnGridStateChanged { get; set; }
+
+    private string TurnDesc => Game.Turn == Players.PlayerOne ? "Your Turn": "Opponents Turn";
+
+    private GameMessageType MsgType = GameMessageType.Instruction;
+    private string Msg = "Select a location on your opponents grid to fire on.";
+
+    private bool m_IsFinished;
+
+    private async Task SetMessage(string msg, GameMessageType type, bool skipUpdate = false)
+    {
+        MsgType = type;
+        Msg = msg;
+
+        if (skipUpdate)
+            return;
+
+        StateHasChanged();
+        await Task.Delay(1000);
+    }
+
+    public async Task CellSelectedForTurn(Point coord)
+    {
+        if (Game.Turn != Players.PlayerOne || m_IsFinished)
+            return; // or throw ?
+
+        var gridSquare = new GridSquare(coord);
+
+        await SetMessage($"Firing on {gridSquare}", GameMessageType.Action);
+
+        var result = Game.Fire(gridSquare);
+
+        if (!result.IsHit)
+        {
+            ComputerGridState.Grid[coord] = CellState.Miss;
+            await SetMessage($"{gridSquare} missed.", GameMessageType.Negative, true);
+        }
+        else
+        {
+            ComputerGridState.Grid[coord] = CellState.Hit;
+            var sunkDesc = string.Empty;
+            if (result.IsSunkShip)
+            {
+                ComputerGridState.DrawShip(result.ShipSunk);
+                sunkDesc = $" You sank a ship of length {result.ShipSunk.Length}!";
+                if (result.HaveWon)
+                    m_IsFinished = true;
+            }
+            await SetMessage($"Hit {gridSquare}!{sunkDesc}", GameMessageType.Positive, true);
+        }
+
+        OnGridStateChanged?.Invoke();
+        StateHasChanged();
+        await Task.Delay(1000);
+
+        if (m_IsFinished)
+        {
+            await Win();
+            return;
+        }
+
+        await SetMessage($"Awaiting incoming fire...", GameMessageType.Action);
+
+        var opponentResult = Game.OpponentsTurn();
+
+        if (!opponentResult.IsHit)
+        {
+            PlayerGridState.Grid[opponentResult.Target.Point] = CellState.Miss;
+            await SetMessage($"Opponent Misses {opponentResult.Target}.", GameMessageType.Positive, true);
+        }
+        else
+        {
+            PlayerGridState.Grid[opponentResult.Target.Point] = CellState.Hit;
+
+            var sunkDesc = string.Empty;
+            if (opponentResult.IsSunkShip)
+            {
+                PlayerGridState.DrawShip(opponentResult.ShipSunk);
+                sunkDesc = $" Opponent sinks ship of length {opponentResult.ShipSunk.Length}!";
+                if (opponentResult.HaveWon)
+                    m_IsFinished = true;
+            }
+
+            await SetMessage($"Opponent Hits {opponentResult.Target}!{sunkDesc}", GameMessageType.Negative, true);
+        }
+
+        OnGridStateChanged?.Invoke();
+        StateHasChanged();
+
+        if (m_IsFinished)
+        {
+            await Lose();
+            return;
+        }
+
+        await Task.Delay(1000);
+        await SetMessage("Select a location on your opponents grid to fire on.", GameMessageType.Instruction, true);
+        StateHasChanged();
+    }
+
+    private async Task Win()
+    {
+        await SetMessage("You Win!!!", GameMessageType.Positive);
+    }
+
+    private async Task Lose()
+    {
+        await SetMessage("You Lose :(", GameMessageType.Negative);
+    }
+}

@@ -48,3 +48,27 @@ a, .btn-link {
         right: 0.75rem;
         top: 0.5rem;
     }
+
+
+.target {
+    background-color: cornflowerblue;
+}
+
+.cell {
+    text-align: center;
+    vertical-align: middle;
+    color: darkblue;
+}
+
+.cell-live:hover {
+    background-color: lightblue;
+} 
+
+.cell.hit,
+.cell.sunk {
+    color: red;
+}
+
+.cell.miss {
+    color: grey;
+}

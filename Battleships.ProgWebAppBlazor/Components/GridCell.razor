@@ -1,15 +1,70 @@
 ﻿@using System.Drawing; 
 
-<td>@value</td>
+<td class=@CssClass() @onclick=CellOnClick><i class="fa @value" aria-hidden="true"></i></td>
 
 @code {
     [Parameter]
     public Point Coord { get; set; }
 
     [Parameter]
-    public CellState State { get; set; }
+    public CellState State
+    {
+        get { return m_CellState; }
+        set
+        {
+            m_CellState = value;
+            IsSelected = false;
+        }
+    }
 
-    private string value => State == CellState.PlacedShip 
-                                        ? "S"
-                                        : "";
+    [Parameter]
+    public bool AllowSelection { get; set; }
+
+    [Parameter]
+    public Action<Point> OnCellClicked { get; set; }
+
+    private bool IsSelected;
+
+    private CellState m_CellState;
+
+    private string value => State == CellState.PlacedShip
+                                        ? "fa-map-pin"
+                                        : State == CellState.Hit
+                                            ? "fa-circle"
+                                            : State == CellState.Sunk
+                                                ? "fa-fire"
+                                                : State == CellState.Miss
+                                                    ? "fa-circle-o"
+                                                    : "";
+
+    private const string cellCss = "cell";
+    private const string selectableCellCss = "cell-live";
+    private const string selectedCellCss = "target";
+
+    private string CssClass()
+    {
+        var css = cellCss;
+        if (State == CellState.Hit)
+            return css + " hit";
+        if (State == CellState.Miss)
+            return css + " miss";
+        if (State == CellState.Sunk)
+            return css + " sunk";
+
+        if (AllowSelection)
+            css += " " + selectableCellCss;
+        if (IsSelected)
+            css += " " + selectedCellCss;
+        return css;
+    }
+
+    private void CellOnClick()
+    {
+        if (!AllowSelection || State != CellState.None)
+            return;
+
+        IsSelected = true;
+        StateHasChanged();
+        OnCellClicked?.Invoke(Coord);
+    }
 }

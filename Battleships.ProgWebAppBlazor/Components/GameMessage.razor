@@ -1,0 +1,27 @@
+﻿<div class="alert alert-@AlertClass()" role="alert">
+    @Message
+</div>
+
+@code {
+
+    [Parameter]
+    public GameMessageType Type { get; set; }
+
+    [Parameter]
+    public string Message { get; set; }
+
+    private string AlertClass()
+    {
+        switch (Type)
+        {
+            case GameMessageType.Action:
+                return "primary";
+            case GameMessageType.Negative:
+                return "danger";
+            case GameMessageType.Positive:
+                return "success";
+            default:
+                return "light";
+        }
+    }
+}

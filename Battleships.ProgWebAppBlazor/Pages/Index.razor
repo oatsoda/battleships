@@ -1,19 +1,21 @@
 ﻿@page "/"
 @using Battleships.ProgWebAppBlazor.Components
 @using Battleships.GameEngine
+@using System.Drawing
 
 <h1>Battleships</h1>
 
 <div class="row">
     <div class="col-md-6">
-        <GridBoard GridState=@PlayerGrid Visible=@true />
+        <GridBoard GridState=@PlayerGrid Visible=@true OnCellClicked="@(async (p) => await CellClicked(p))" />
     </div>
     <div class="col-md-6">
-        <GridBoard GridState=@ComputerGrid Visible=@IsPlaying HideShips=@true />
+        <GridBoard GridState=@ComputerGrid Visible=@IsPlaying IsComputer=@true OnCellClicked="@(async (p) => await CellClicked(p))" />
     </div>
 </div>
 <div>
     <SetupBoardInput SetupBoard=@PlayerSetupBoard GridState=@PlayerGrid OnShipsChanged=@SetupBoardInputShipsChanged />
+    <PlayGame @ref=playGame PlayerGridState=@PlayerGrid ComputerGridState=@ComputerGrid Game=@Game OnGridStateChanged=@GridStatesChanged />
 </div>
 
 @code {
@@ -33,6 +35,18 @@
         }
 
         StateHasChanged();
+    }
+
+    private PlayGame playGame;
+
+    private void GridStatesChanged()
+    {
+        StateHasChanged();
+    }
+
+    private async Task CellClicked(Point coord)
+    {
+        await playGame.CellSelectedForTurn(coord);
     }
 }
 

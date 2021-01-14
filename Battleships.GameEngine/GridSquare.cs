@@ -22,7 +22,7 @@ namespace Battleships.GameEngine
             Point = new Point(X - 65, Y);
         }
 
-        internal GridSquare(Point point)
+        public GridSquare(Point point)
         {
             Point = point;
             X = (char)(point.X+65);
