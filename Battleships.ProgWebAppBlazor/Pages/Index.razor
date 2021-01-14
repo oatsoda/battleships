@@ -4,67 +4,22 @@
 
 <h1>Battleships</h1>
 
-<GridBoard GridState=@m_Grid />
-
-<p>Enter your five ships (1 x 5 length, 1 x 4 length, 2 x 3 length and 1 x 2 length) in the format 'start end', e.g. 'A0 A5'.</p>
-
-<EditForm Model=@SetupShips OnValidSubmit=@ValidFormSubmitted>
-    <DataAnnotationsValidator />
-    <div class="form-group">
-        <label for="Name">Ship One</label>
-        <InputText @bind-Value=SetupShips.ShipOne class="form-control" id="ShipOne" @onblur=InputBlur />
-        <ValidationMessage For="() => SetupShips.ShipOne" />
-    </div>
-    <div class="form-group">
-        <label for="Name">Ship Two</label>
-        <InputText @bind-Value=SetupShips.ShipTwo class="form-control" id="ShipTwo" @onblur=InputBlur />
-        <ValidationMessage For="() => SetupShips.ShipTwo" />
-    </div>
-    <div class="form-group">
-        <label for="Name">Ship Three</label>
-        <InputText @bind-Value=SetupShips.ShipThree class="form-control" id="ShipThree" @onblur=InputBlur />
-        <ValidationMessage For="() => SetupShips.ShipThree" />
-    </div>
-    <div class="form-group">
-        <label for="Name">Ship Four</label>
-        <InputText @bind-Value=SetupShips.ShipFour class="form-control" id="ShipFour" @onblur=InputBlur />
-        <ValidationMessage For="() => SetupShips.ShipFour" />
-    </div>
-    <div class="form-group">
-        <label for="Name">Ship Five</label>
-        <InputText @bind-Value=SetupShips.ShipFive class="form-control" id="ShipFive" @onblur=InputBlur />
-        <ValidationMessage For="() => SetupShips.ShipFive" />
-    </div>
-    <input type="submit" class="btn btn-primary" value="Start Game" />
-</EditForm>
-
+<CascadingValue Value=@m_SetupBoard>
+    <CascadingValue Value=@m_Grid>
+        <GridBoard />
+        <SetupBoardInput OnShipsChanged=@SetupBoardInputShipsChanged />
+    </CascadingValue>
+</CascadingValue>
 
 @code {
-
-    private SetupShips SetupShips = new SetupShips();
 
     private GridState m_Grid = new GridState();
 
     private SetupBoard m_SetupBoard = new SetupBoard();
 
-    private void InputBlur(FocusEventArgs args) => DisplayShips();
-
-    private void DisplayShips(bool assumeValid = false)
+    private void SetupBoardInputShipsChanged(bool setupCompleted)
     {
-        m_SetupBoard.Reset();
-        m_Grid.Clear();
-
-        foreach (var ship in SetupShips.GetValidStructuralShips())
-        {
-            m_Grid.DrawShip(ship.ship);
-            if (assumeValid)
-                m_SetupBoard.AddShip(ship.ship);
-        }
-    }
-
-    void ValidFormSubmitted(EditContext editContext)
-    {
-        DisplayShips(true);
+        StateHasChanged();
     }
 }
 
