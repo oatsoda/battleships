@@ -4,9 +4,17 @@
 
 <h1>Battleships</h1>
 
-<GridBoard GridState=@PlayerGrid Visible=@true />
-<GridBoard GridState=@ComputerGrid Visible=@IsPlaying HideShips=@true />
-<SetupBoardInput SetupBoard=@PlayerSetupBoard GridState=@PlayerGrid OnShipsChanged=@SetupBoardInputShipsChanged />
+<div class="row">
+    <div class="col-md-6">
+        <GridBoard GridState=@PlayerGrid Visible=@true />
+    </div>
+    <div class="col-md-6">
+        <GridBoard GridState=@ComputerGrid Visible=@IsPlaying HideShips=@true />
+    </div>
+</div>
+<div>
+    <SetupBoardInput SetupBoard=@PlayerSetupBoard GridState=@PlayerGrid OnShipsChanged=@SetupBoardInputShipsChanged />
+</div>
 
 @code {
 
