@@ -1,37 +1,51 @@
 ﻿@using System.Drawing;
 
-<table class="table table-bordered">
-    <thead>
-        <tr>
-            <th></th>
-            <th>A</th>
-            <th>B</th>
-            <th>C</th>
-            <th>D</th>
-            <th>E</th>
-            <th>F</th>
-            <th>G</th>
-            <th>H</th>
-            <th>I</th>
-            <th>J</th>
-        </tr>
-    </thead>
-    <tbody>
-        @for (int y = 0; y < 10; y++)
-        {
+@if (Visible)
+{ 
+    <table class="table table-bordered">
+        <thead>
             <tr>
-                <th>@y</th>
-                @for (int x = 0; x < 10; x++)
-                {
-                    var p = new Point(x, y);
-                    <GridCell Coord=@p State=@GridState.Grid[p] />
-                }
+                <th></th>
+                <th>A</th>
+                <th>B</th>
+                <th>C</th>
+                <th>D</th>
+                <th>E</th>
+                <th>F</th>
+                <th>G</th>
+                <th>H</th>
+                <th>I</th>
+                <th>J</th>
             </tr>
-        }
-    </tbody>
-</table>
+        </thead>
+        <tbody>
+            @for (int y = 0; y < 10; y++)
+            {
+                <tr>
+                    <th>@y</th>
+                    @for (int x = 0; x < 10; x++)
+                    {
+                        var p = new Point(x, y);
+                        <GridCell Coord=@p State=@GetState(p) />
+                    }
+                </tr>
+            }
+        </tbody>
+    </table>
+}
 
 @code {
-    [CascadingParameter]
+    [Parameter]
     public GridState GridState { get; set; }
+
+    [Parameter]
+    public bool HideShips { get; set; }
+
+    [Parameter]
+    public bool Visible { get; set; }
+
+    private CellState GetState(Point point)
+    {
+        return GridState.Grid[point];
+    }
 }

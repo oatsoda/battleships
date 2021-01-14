@@ -4,21 +4,26 @@
 
 <h1>Battleships</h1>
 
-<CascadingValue Value=@m_SetupBoard>
-    <CascadingValue Value=@m_Grid>
-        <GridBoard />
-        <SetupBoardInput OnShipsChanged=@SetupBoardInputShipsChanged />
-    </CascadingValue>
-</CascadingValue>
+<GridBoard GridState=@PlayerGrid Visible=@true />
+<GridBoard GridState=@ComputerGrid Visible=@IsPlaying HideShips=@true />
+<SetupBoardInput SetupBoard=@PlayerSetupBoard GridState=@PlayerGrid OnShipsChanged=@SetupBoardInputShipsChanged />
 
 @code {
 
-    private GridState m_Grid = new GridState();
-
-    private SetupBoard m_SetupBoard = new SetupBoard();
+    private GridState PlayerGrid = new GridState();
+    private SetupBoard PlayerSetupBoard = new SetupBoard();
+    private GridState ComputerGrid = new GridState();
+    private Game Game;
+    private bool IsPlaying;
 
     private void SetupBoardInputShipsChanged(bool setupCompleted)
     {
+        if (setupCompleted)
+        {
+            Game = new Game(PlayerSetupBoard);
+            IsPlaying = true;
+        }
+
         StateHasChanged();
     }
 }

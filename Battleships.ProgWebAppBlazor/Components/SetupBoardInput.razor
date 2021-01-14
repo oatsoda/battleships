@@ -37,10 +37,10 @@
 
 @code {
 
-    [CascadingParameter]
+    [Parameter]
     public GridState GridState { get; set; }
 
-    [CascadingParameter]
+    [Parameter]
     public SetupBoard SetupBoard { get; set; }
 
     [Parameter]
@@ -69,7 +69,7 @@
 
     void ValidFormSubmitted(EditContext editContext)
     {
-        DisplayShips(true);
         IsCompleted = true;
+        DisplayShips(true);
     }
 }
