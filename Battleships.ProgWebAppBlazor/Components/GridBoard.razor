@@ -1,0 +1,37 @@
+﻿@using System.Drawing;
+
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th></th>
+            <th>A</th>
+            <th>B</th>
+            <th>C</th>
+            <th>D</th>
+            <th>E</th>
+            <th>F</th>
+            <th>G</th>
+            <th>H</th>
+            <th>I</th>
+            <th>J</th>
+        </tr>
+    </thead>
+    <tbody>
+        @for (int y = 0; y < 10; y++)
+        {
+            <tr>
+                <th>@y</th>
+                @for (int x = 0; x < 10; x++)
+                {
+                    var p = new Point(x, y);
+                    <GridCell Coord=@p State=@GridState.Grid[p] />
+                }
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    [Parameter]
+    public GridState GridState { get; set; }
+}
