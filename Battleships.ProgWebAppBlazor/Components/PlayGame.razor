@@ -3,9 +3,12 @@
 
 @if (Game != null)
 {
-    <h2>@TurnDesc</h2>
-
-    <GameMessage Type=@MsgType Message=@Msg />
+    <div class="row">
+        <div class="col">
+            <h2>@TurnDesc</h2>
+            <GameMessage Type=@MsgType Message=@Msg />
+        </div>
+    </div>
 }
 
 @code {
@@ -25,9 +28,11 @@
     private string TurnDesc => Game.Turn == Players.PlayerOne ? "Your Turn": "Opponents Turn";
 
     private GameMessageType MsgType = GameMessageType.Instruction;
-    private string Msg = "Select a location on your opponents grid to fire on.";
+    private string Msg = FireMsg;
 
     private bool m_IsFinished;
+
+    private const string FireMsg = "Select target square to fire on.";
 
     private async Task SetMessage(string msg, GameMessageType type, bool skipUpdate = false)
     {
@@ -116,7 +121,7 @@
         }
 
         await Task.Delay(1000);
-        await SetMessage("Select a location on your opponents grid to fire on.", GameMessageType.Instruction, true);
+        await SetMessage(FireMsg, GameMessageType.Instruction, true);
         StateHasChanged();
     }
 

@@ -13,10 +13,9 @@
         <GridBoard GridState=@ComputerGrid Visible=@IsPlaying IsComputer=@true OnCellClicked="@(async (p) => await CellClicked(p))" />
     </div>
 </div>
-<div>
-    <SetupBoardInput SetupBoard=@PlayerSetupBoard GridState=@PlayerGrid OnShipsChanged=@SetupBoardInputShipsChanged />
-    <PlayGame @ref=playGame PlayerGridState=@PlayerGrid ComputerGridState=@ComputerGrid Game=@Game OnGridStateChanged=@GridStatesChanged />
-</div>
+<SetupBoardInput SetupBoard=@PlayerSetupBoard GridState=@PlayerGrid OnShipsChanged=@SetupBoardInputShipsChanged />
+<PlayGame @ref=playGame PlayerGridState=@PlayerGrid ComputerGridState=@ComputerGrid Game=@Game OnGridStateChanged=@GridStatesChanged />
+
 
 @code {
 

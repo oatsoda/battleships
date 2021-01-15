@@ -1,7 +1,9 @@
 using Battleships.GameEngine.Random;
+using Battleships.GameEngine.Strategy;
 using Moq;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -28,7 +30,7 @@ namespace Battleships.GameEngine.Tests
             m_OpponentSetupBoard.AddShip(("I5", "I8"));
             m_OpponentSetupBoard.AddShip(("J5", "J9"));
 
-            m_Game = new Game(m_SetupBoard, m_OpponentSetupBoard, new RandomCoordGenerator());
+            m_Game = new Game(m_SetupBoard, m_OpponentSetupBoard, new RandomCoordGenerator(), new SinkShipStrategy());
             m_TestOutputHelper = testOutputHelper;
         }
 
@@ -240,7 +242,7 @@ namespace Battleships.GameEngine.Tests
             var randomCoordsToGenerate = new[] { "I8", "I8", "J5" };
 
             // Given
-            m_Game = new Game(m_SetupBoard, m_OpponentSetupBoard, RandomReturn(randomCoordsToGenerate).Object);
+            m_Game = new Game(m_SetupBoard, m_OpponentSetupBoard, RandomReturn(randomCoordsToGenerate).Object, new SinkShipStrategy());
             m_Game.Fire("B4");
             Assert.Equal(Players.PlayerTwo, m_Game.Turn);
             var preResult = m_Game.OpponentsTurn();
@@ -267,7 +269,7 @@ namespace Battleships.GameEngine.Tests
             setupBoard.AddShip(("B3", "B5"));
             setupBoard.AddShip(("G3", "G4"));
             
-            m_Game = new Game(setupBoard, m_OpponentSetupBoard, RandomReturn("G3", "J7").Object);
+            m_Game = new Game(setupBoard, m_OpponentSetupBoard, RandomReturn("G3", "J7").Object, new SinkShipStrategy());
             
             m_Game.Fire("A0");
             Assert.Equal(Players.PlayerTwo, m_Game.Turn);
@@ -301,7 +303,7 @@ namespace Battleships.GameEngine.Tests
             Assert.Equal("J7", nextResult.Target.ToString());
         }
         
-        [Fact(Skip = "Doesn't work because if sinks first ship never having hit second, will just move on. Can't force it to hit both first.")]
+        [Fact]
         public void OpponentsTurnFinishesOffAdjacentShipsIfFound()
         {
             // Given
@@ -311,8 +313,20 @@ namespace Battleships.GameEngine.Tests
             setupBoard.AddShip(("B0", "B2"));
             setupBoard.AddShip(("G5", "G7"));
             setupBoard.AddShip(("G3", "G4"));
-            
-            m_Game = new Game(setupBoard, m_OpponentSetupBoard, RandomReturn("G3", "J7").Object);
+
+            var sinkShipStrategy = new Mock<ISinkShipStrategy>();
+            sinkShipStrategy.Setup(s => s.NextTarget(It.IsAny<List<Point>>(), It.IsAny<ShotState[,]>()))
+                            .Returns<List<Point>, ShotState[,]>((h,p) => {
+                                
+                                    // Force sink ship strategy to return a fixed result for the first call to ensure it does actually hit the adjacent ship (random cannot guarentee)
+                                    if (h.Count == 1 && h[0] == new GridSquare("G4").Point)
+                                        return new GridSquare("G5").Point;
+
+                                    return new SinkShipStrategy().NextTarget(h,p);
+                                }
+                            );
+
+            m_Game = new Game(setupBoard, m_OpponentSetupBoard, RandomReturn("G4", "J7").Object, sinkShipStrategy.Object);
             
             m_Game.Fire("A0");
             Assert.Equal(Players.PlayerTwo, m_Game.Turn);
@@ -357,7 +371,7 @@ namespace Battleships.GameEngine.Tests
         public void OpponentsTurnReturnsWhetherHit(string coords, bool expectedHit)
         {
             // Given
-            m_Game = new Game(m_SetupBoard, m_OpponentSetupBoard, RandomReturn(coords).Object);
+            m_Game = new Game(m_SetupBoard, m_OpponentSetupBoard, RandomReturn(coords).Object, new SinkShipStrategy());
             m_Game.Fire("A0");
 
             // When
@@ -382,7 +396,7 @@ namespace Battleships.GameEngine.Tests
         public void OpponentsTurnReturnsWhetherSunk(string[] coords, bool expectedSunk, int? expectedSunkSize)
         {
             // Given
-            m_Game = new Game(m_SetupBoard, m_OpponentSetupBoard, RandomReturn(coords).Object);
+            m_Game = new Game(m_SetupBoard, m_OpponentSetupBoard, RandomReturn(coords).Object, new SinkShipStrategy());
             m_Game.Fire("A0");
 
             var x = 0;
@@ -429,7 +443,7 @@ namespace Battleships.GameEngine.Tests
         public void OpponentsTurnReturnsWhetherWon(string[] coords)
         {
             // Given
-            m_Game = new Game(m_SetupBoard, m_OpponentSetupBoard, RandomReturn(coords).Object);
+            m_Game = new Game(m_SetupBoard, m_OpponentSetupBoard, RandomReturn(coords).Object, new SinkShipStrategy());
             m_Game.Fire("A0");
 
             var x = 0;

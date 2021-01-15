@@ -2,27 +2,27 @@
 
 @if (Visible)
 { 
-    <table class="table table-bordered">
+    <table class="table table-bordered @AdditionalTableClasses">
         <thead>
-            <tr>
-                <th></th>
-                <th>A</th>
-                <th>B</th>
-                <th>C</th>
-                <th>D</th>
-                <th>E</th>
-                <th>F</th>
-                <th>G</th>
-                <th>H</th>
-                <th>I</th>
-                <th>J</th>
+            <tr class="row">
+                <th class=@colStyle></th>
+                <th class=@colStyle>A</th>
+                <th class=@colStyle>B</th>
+                <th class=@colStyle>C</th>
+                <th class=@colStyle>D</th>
+                <th class=@colStyle>E</th>
+                <th class=@colStyle>F</th>
+                <th class=@colStyle>G</th>
+                <th class=@colStyle>H</th>
+                <th class=@colStyle>I</th>
+                <th class=@colStyle>J</th>
             </tr>
         </thead>
         <tbody>
             @for (int y = 0; y < 10; y++)
             {
-                <tr>
-                    <th>@y</th>
+                <tr class="row">
+                    <th class=@colStyle>@y</th>
                     @for (int x = 0; x < 10; x++)
                     {
                         var p = new Point(x, y);
@@ -46,6 +46,10 @@
 
     [Parameter]
     public Action<Point> OnCellClicked { get; set; }
+
+    private const string colStyle = "col px-0 py-0 py-md-2";
+
+    private string AdditionalTableClasses => IsComputer ? "ms-md-2" : "";
 
     private CellState GetState(Point point)
     {

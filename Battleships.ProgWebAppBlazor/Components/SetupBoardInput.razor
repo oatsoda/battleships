@@ -2,37 +2,50 @@
 
 @if (!IsCompleted)
 {
-    <p>Enter your five ships (1 x 5 length, 1 x 4 length, 2 x 3 length and 1 x 2 length) in the format 'start end', e.g. 'A0 A5'.</p>
-
-    <EditForm Model=@SetupShips OnValidSubmit=@ValidFormSubmitted>
-        <DataAnnotationsValidator />
-        <div class="form-group">
-            <label for="Name">Ship One</label>
-            <InputText @bind-Value=SetupShips.ShipOne class="form-control" id="ShipOne" @onblur=InputBlur />
-            <ValidationMessage For="() => SetupShips.ShipOne" />
+    <div class="row">
+        <div class="col-md-6">
+            <p>Enter your five ships (1 x 5 length, 1 x 4 length, 2 x 3 length and 1 x 2 length) in the format 'start end', e.g. 'A0 A5'.</p>
         </div>
-        <div class="form-group">
-            <label for="Name">Ship Two</label>
-            <InputText @bind-Value=SetupShips.ShipTwo class="form-control" id="ShipTwo" @onblur=InputBlur />
-            <ValidationMessage For="() => SetupShips.ShipTwo" />
+    </div>
+    <div class="row">
+        <div class="col-md-6">            
+            <EditForm Model=@SetupShips OnValidSubmit=@ValidFormSubmitted>
+                <DataAnnotationsValidator />
+                <div class="row mb-3">
+                    <div class="col">
+                        <label for="ShipOne">Ship One</label>
+                        <InputText @bind-Value=SetupShips.ShipOne class="form-control" id="ShipOne" @onblur=InputBlur @oninput=InputTyped />
+                        <ValidationMessage For="() => SetupShips.ShipOne" />
+                    </div>
+                    <div class="col">
+                        <label for="ShipTwo">Ship Two</label>
+                        <InputText @bind-Value=SetupShips.ShipTwo class="form-control" id="ShipTwo" @onblur=InputBlur @oninput=InputTyped />
+                        <ValidationMessage For="() => SetupShips.ShipTwo" />
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col">
+                        <label for="ShipThree">Ship Three</label>
+                        <InputText @bind-Value=SetupShips.ShipThree class="form-control" id="ShipThree" @onblur=InputBlur @oninput=InputTyped />
+                        <ValidationMessage For="() => SetupShips.ShipThree" />
+                    </div>
+                    <div class="col">
+                        <label for="ShipFour">Ship Four</label>
+                        <InputText @bind-Value=SetupShips.ShipFour class="form-control" id="ShipFour" @onblur=InputBlur @oninput=InputTyped />
+                        <ValidationMessage For="() => SetupShips.ShipFour" />
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-6">
+                        <label for="ShipFive">Ship Five</label>
+                        <InputText @bind-Value=SetupShips.ShipFive class="form-control" id="ShipFive" @onblur=InputBlur @oninput=InputTyped />
+                        <ValidationMessage For="() => SetupShips.ShipFive" />
+                    </div>
+                </div>
+                <input type="submit" class="btn btn-primary" value="Start Game" />
+            </EditForm>
         </div>
-        <div class="form-group">
-            <label for="Name">Ship Three</label>
-            <InputText @bind-Value=SetupShips.ShipThree class="form-control" id="ShipThree" @onblur=InputBlur />
-            <ValidationMessage For="() => SetupShips.ShipThree" />
-        </div>
-        <div class="form-group">
-            <label for="Name">Ship Four</label>
-            <InputText @bind-Value=SetupShips.ShipFour class="form-control" id="ShipFour" @onblur=InputBlur />
-            <ValidationMessage For="() => SetupShips.ShipFour" />
-        </div>
-        <div class="form-group">
-            <label for="Name">Ship Five</label>
-            <InputText @bind-Value=SetupShips.ShipFive class="form-control" id="ShipFive" @onblur=InputBlur />
-            <ValidationMessage For="() => SetupShips.ShipFive" />
-        </div>
-        <input type="submit" class="btn btn-primary" value="Start Game" />
-    </EditForm>
+    </div>
 }
 
 @code {
@@ -51,6 +64,12 @@
     private bool IsCompleted;
 
     private void InputBlur(FocusEventArgs args) => DisplayShips();
+
+    private void InputTyped(ChangeEventArgs args)
+    {
+        if (((string)args.Value).Length == 5)
+            DisplayShips();
+    }
 
     private void DisplayShips(bool isCompleted = false)
     {

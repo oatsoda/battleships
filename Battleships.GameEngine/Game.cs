@@ -1,4 +1,5 @@
 ﻿using Battleships.GameEngine.Random;
+using Battleships.GameEngine.Strategy;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -13,7 +14,9 @@ namespace Battleships.GameEngine
 
         private readonly SetupBoard m_PlayerTwoSetup;
         private readonly ShotState[,] m_PlayerTwoShots = new ShotState[10, 10];
+
         private readonly IRandomCoordGenerator m_RandomCoordGenerator;
+        private readonly ISinkShipStrategy m_SinkShipStrategy;
 
         public Players Turn { get; private set; }
 
@@ -22,6 +25,7 @@ namespace Battleships.GameEngine
         public Game(SetupBoard setupBoard) : this(setupBoard, new SetupBoard().GenerateRandom())
         {
             m_RandomCoordGenerator = new RandomCoordGenerator();
+            m_SinkShipStrategy = new SinkShipStrategy();
         }
 
         private Game(SetupBoard playerOneSetup, SetupBoard playerTwoSetup) 
@@ -38,9 +42,10 @@ namespace Battleships.GameEngine
             Turn = Players.PlayerOne;
         }
 
-        internal Game(SetupBoard setupBoard, SetupBoard opponentsSetupBoard, IRandomCoordGenerator randomCoordGenerator) : this(setupBoard, opponentsSetupBoard)
+        internal Game(SetupBoard setupBoard, SetupBoard opponentsSetupBoard, IRandomCoordGenerator randomCoordGenerator, ISinkShipStrategy sinkShipStrategy) : this(setupBoard, opponentsSetupBoard)
         {
             m_RandomCoordGenerator = randomCoordGenerator;
+            m_SinkShipStrategy = sinkShipStrategy;
         }
 
         public FireResult Fire(GridSquare target)
@@ -104,32 +109,8 @@ namespace Battleships.GameEngine
             if (m_PlayerTwoUnsunkHits.Count == 0)
                 throw new InvalidOperationException("Can only calculate known ship targets if already hit but ship not sunk.");
 
-            // Could be non-rectangular.  Need to trace around the edge of all points somehow.
-            var ordered = m_PlayerTwoUnsunkHits.OrderBy(p => p.X).OrderBy(p => p.Y);
-
-            var potentials = new List<Point>();
-            foreach (var hit in m_PlayerTwoUnsunkHits)
-            {
-                potentials.AddRange(AdjacentPoints(hit));
-            }
-
-            potentials.RemoveAll(p => m_PlayerTwoUnsunkHits.Contains(p) || m_PlayerTwoShots[p.X, p.Y] != ShotState.NoShot);
-            return new GridSquare(potentials.First());
-        }
-
-        private static IEnumerable<Point> AdjacentPoints(Point point)
-        {
-            if (point.X > 0)
-                yield return new Point(point.X - 1, point.Y);
-
-            if (point.X < 9)
-                yield return new Point(point.X + 1, point.Y);
-            
-            if (point.Y > 0)
-                yield return new Point(point.X, point.Y - 1);
-
-            if (point.Y < 9)
-                yield return new Point(point.X, point.Y + 1);
+            var target = m_SinkShipStrategy.NextTarget(m_PlayerTwoUnsunkHits, m_PlayerTwoShots);
+            return new GridSquare(target);
         }
     }
 
