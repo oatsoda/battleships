@@ -30,7 +30,7 @@ namespace Battleships.GameEngine.Tests
             m_OpponentSetupBoard.AddShip(("I5", "I8"));
             m_OpponentSetupBoard.AddShip(("J5", "J9"));
 
-            m_Game = new Game(m_SetupBoard, m_OpponentSetupBoard, new RandomCoordGenerator(), new SinkShipStrategy());
+            m_Game = new Game(m_SetupBoard, m_OpponentSetupBoard, new ShipSeekingEfficientStrategy());
             m_TestOutputHelper = testOutputHelper;
         }
 
@@ -239,10 +239,10 @@ namespace Battleships.GameEngine.Tests
         [Fact]
         public void OpponentsTurnDoesNotFireAtSameGridSquareMoreThanOnce() 
         {
-            var randomCoordsToGenerate = new[] { "I8", "I8", "J5" };
+            var coordsToTargetStrategy = new[] { "I8", "I8", "J5" };
 
             // Given
-            m_Game = new Game(m_SetupBoard, m_OpponentSetupBoard, RandomReturn(randomCoordsToGenerate).Object, new SinkShipStrategy());
+            m_Game = new Game(m_SetupBoard, m_OpponentSetupBoard, FixedTargetStrategy(coordsToTargetStrategy).Object);
             m_Game.Fire("B4");
             Assert.Equal(Players.PlayerTwo, m_Game.Turn);
             var preResult = m_Game.OpponentsTurn();
@@ -258,120 +258,71 @@ namespace Battleships.GameEngine.Tests
             Assert.Equal("J5", result.Target.ToString());
         } 
 
-        [Fact]
-        public void OpponentsTurnFinishesOffShipIfFound()
-        {
-            // Given
-            var setupBoard = new SetupBoard();
-            setupBoard.AddShip(("A0", "A4"));
-            setupBoard.AddShip(("A5", "A8"));
-            setupBoard.AddShip(("B0", "B2"));
-            setupBoard.AddShip(("B3", "B5"));
-            setupBoard.AddShip(("G3", "G4"));
-            
-            m_Game = new Game(setupBoard, m_OpponentSetupBoard, RandomReturn("G3", "J7").Object, new SinkShipStrategy());
-            
-            m_Game.Fire("A0");
-            Assert.Equal(Players.PlayerTwo, m_Game.Turn);
-            var preResult = m_Game.OpponentsTurn();
-            Assert.True(preResult.IsHit);
+        /*
+         Would have prefered to have behavioural tests for ensuring that ships hit are then hunted and sunk, but the random
+         element makes that difficult, so it's now tested separately in the strategy.
+         */
 
-            FireResult PlayTurn(int turnNumber)
-            {
-                m_Game.Fire(GetSequentialCoord(turnNumber));
-                return m_Game.OpponentsTurn();
-            }
+        [Fact]
+        public void OpponentsTurnPassesPreviousShotsToStrategy()
+        {
+            var coordsToTargetStrategy = new[] { "I8", "J5" };
+
+            // Given
+            var computerStrategy = FixedTargetStrategy(coordsToTargetStrategy);
+            m_Game = new Game(m_SetupBoard, m_OpponentSetupBoard, computerStrategy.Object);
+            m_Game.Fire("B4");
+            Assert.Equal(Players.PlayerTwo, m_Game.Turn);
 
             // When
-            const int expectedSunkWithinTurns = 8;
-            int? sunkAfter = null;
-            for (var x = 1; x <= expectedSunkWithinTurns;x++)
-            {   
-                if (PlayTurn(x).IsSunkShip)
-                {
-                    sunkAfter = x;
-                    break;
-                }
-            }
+            var firstResult = m_Game.OpponentsTurn();
+            Assert.False(firstResult.IsHit);
 
             // Then
-            Assert.NotNull(sunkAfter);
-            Assert.True(sunkAfter <= expectedSunkWithinTurns);
+            computerStrategy.Verify(s => s.NextTarget(It.IsAny<List<Point>>(), It.Is<ShotState[,]>(st => st[firstResult.Target.Point.X, firstResult.Target.Point.Y] == ShotState.Miss)), Times.Once);
 
-            // And
-            var nextResult = PlayTurn(sunkAfter.Value + 1);
-            Assert.Equal("J7", nextResult.Target.ToString());
+            // And Given
+            m_Game.Fire("B5");
+            Assert.Equal(Players.PlayerTwo, m_Game.Turn);
+
+            // And When
+            var secondResult = m_Game.OpponentsTurn();
+            
+            // Then
+            Assert.False(secondResult.IsHit);
+            computerStrategy.Verify(s => s.NextTarget(It.IsAny<List<Point>>(), It.Is<ShotState[,]>(st => st[secondResult.Target.Point.X, secondResult.Target.Point.Y] == ShotState.Miss)), Times.Exactly(2)); // <!-- Moq not tracking ref param values, so param is evaluted AFTER.
         }
         
         [Fact]
-        public void OpponentsTurnFinishesOffAdjacentShipsIfFound()
+        public void OpponentsTurnPassesUnsunkHitsToStrategy()
         {
+            var coordsToTargetStrategy = new[] { "C1", "I8" };
+
             // Given
-            var setupBoard = new SetupBoard();
-            setupBoard.AddShip(("A0", "A4"));
-            setupBoard.AddShip(("A5", "A8"));
-            setupBoard.AddShip(("B0", "B2"));
-            setupBoard.AddShip(("G5", "G7"));
-            setupBoard.AddShip(("G3", "G4"));
-
-            var sinkShipStrategy = new Mock<ISinkShipStrategy>();
-            sinkShipStrategy.Setup(s => s.NextTarget(It.IsAny<List<Point>>(), It.IsAny<ShotState[,]>()))
-                            .Returns<List<Point>, ShotState[,]>((h,p) => {
-                                
-                                    // Force sink ship strategy to return a fixed result for the first call to ensure it does actually hit the adjacent ship (random cannot guarentee)
-                                    if (h.Count == 1 && h[0] == new GridSquare("G4").Point)
-                                        return new GridSquare("G5").Point;
-
-                                    return new SinkShipStrategy().NextTarget(h,p);
-                                }
-                            );
-
-            m_Game = new Game(setupBoard, m_OpponentSetupBoard, RandomReturn("G4", "J7").Object, sinkShipStrategy.Object);
-            
-            m_Game.Fire("A0");
+            var computerStrategy = FixedTargetStrategy(coordsToTargetStrategy);
+            m_Game = new Game(m_SetupBoard, m_OpponentSetupBoard, computerStrategy.Object);
+            m_Game.Fire("B4");
             Assert.Equal(Players.PlayerTwo, m_Game.Turn);
-            var preResult = m_Game.OpponentsTurn();
-            Assert.True(preResult.IsHit);
-
-            FireResult PlayTurn(int turnNumber)
-            {
-                m_Game.Fire(GetSequentialCoord(turnNumber));
-                var r = m_Game.OpponentsTurn();
-                m_TestOutputHelper.WriteLine($"Fired at {r.Target}. Hit: {r.IsHit} Sunk: {r.IsSunkShip}");
-                return r;
-            }
+            var firstResult = m_Game.OpponentsTurn();
+            Assert.True(firstResult.IsHit);
+            m_Game.Fire("B5");
+            Assert.Equal(Players.PlayerTwo, m_Game.Turn);
 
             // When
-            const int expectedBothSunkWithinTurns = 17;
-            var firstSunk = false;
-            int? sunkAfter = null;
-            for (var x = 1; x <= expectedBothSunkWithinTurns;x++)
-            {   
-                if (PlayTurn(x).IsSunkShip)
-                {
-                    if (!firstSunk)
-                    {
-                        firstSunk = true;
-                        continue;
-                    }
-
-                    sunkAfter = x;
-                    break;
-                }
-            }
+            var secondResult = m_Game.OpponentsTurn();
 
             // Then
-            Assert.NotNull(sunkAfter);
-            Assert.True(sunkAfter <= expectedBothSunkWithinTurns);
+            computerStrategy.Verify(s => s.NextTarget(It.Is<List<Point>>(pts => pts.Contains(new GridSquare("C1").Point)), It.IsAny<ShotState[,]>()));
         }
-                
+
+                        
         [Theory]
         [InlineData("F6", false)]
         [InlineData("A0", true)]
         public void OpponentsTurnReturnsWhetherHit(string coords, bool expectedHit)
         {
             // Given
-            m_Game = new Game(m_SetupBoard, m_OpponentSetupBoard, RandomReturn(coords).Object, new SinkShipStrategy());
+            m_Game = new Game(m_SetupBoard, m_OpponentSetupBoard, FixedTargetStrategy(coords).Object);
             m_Game.Fire("A0");
 
             // When
@@ -390,13 +341,12 @@ namespace Battleships.GameEngine.Tests
             yield return new object[] { new[] { "J9", "D3", "D0", "D1", "D2" }, true, 4 };
         }
 
-        // TODO: Now that the computer has a strategy for finishing off ships, it won't use random for all, so it may take a little longer - need the test to keep trying until done
-        [Theory(Skip = "todo")]
+        [Theory]
         [MemberData(nameof(OpponentSunkShots))]
         public void OpponentsTurnReturnsWhetherSunk(string[] coords, bool expectedSunk, int? expectedSunkSize)
         {
             // Given
-            m_Game = new Game(m_SetupBoard, m_OpponentSetupBoard, RandomReturn(coords).Object, new SinkShipStrategy());
+            m_Game = new Game(m_SetupBoard, m_OpponentSetupBoard, FixedTargetStrategy(coords).Object);
             m_Game.Fire("A0");
 
             var x = 0;
@@ -436,14 +386,12 @@ namespace Battleships.GameEngine.Tests
                                               } };
         }
 
-
-        // TODO: Now that the computer has a strategy for finishing off ships, it won't use random for all, so it may take a little longer - need the test to keep trying until done
-        [Theory(Skip = "todo")]
+        [Theory]
         [MemberData(nameof(OpponentWonShots))]
         public void OpponentsTurnReturnsWhetherWon(string[] coords)
         {
             // Given
-            m_Game = new Game(m_SetupBoard, m_OpponentSetupBoard, RandomReturn(coords).Object, new SinkShipStrategy());
+            m_Game = new Game(m_SetupBoard, m_OpponentSetupBoard, FixedTargetStrategy(coords).Object);
             m_Game.Fire("A0");
 
             var x = 0;
@@ -462,10 +410,10 @@ namespace Battleships.GameEngine.Tests
             }
         }
 
-        private static Mock<IRandomCoordGenerator> RandomReturn(params string[] coords)
+        private static Mock<IComputerStrategy> FixedTargetStrategy(params string[] coords)
         {
-            var random = new Mock<IRandomCoordGenerator>();
-            var r = random.SetupSequence(r => r.GetRandomCoord())
+            var random = new Mock<IComputerStrategy>();
+            var r = random.SetupSequence(r => r.NextTarget(It.IsAny<List<Point>>(), It.IsAny<ShotState[,]>()))
                           .Returns(coords[0]);
 
             for (int i = 1; i < coords.Length; i++)

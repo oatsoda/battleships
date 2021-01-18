@@ -15,8 +15,7 @@ namespace Battleships.GameEngine
         private readonly SetupBoard m_PlayerTwoSetup;
         private readonly ShotState[,] m_PlayerTwoShots = new ShotState[10, 10];
 
-        private readonly IRandomCoordGenerator m_RandomCoordGenerator;
-        private readonly ISinkShipStrategy m_SinkShipStrategy;
+        private readonly IComputerStrategy m_ComputerStrategy;
 
         public Players Turn { get; private set; }
 
@@ -24,8 +23,7 @@ namespace Battleships.GameEngine
         
         public Game(SetupBoard setupBoard) : this(setupBoard, new SetupBoard().GenerateRandom())
         {
-            m_RandomCoordGenerator = new RandomCoordGenerator();
-            m_SinkShipStrategy = new SinkShipStrategy();
+            m_ComputerStrategy = new ShipSeekingEfficientStrategy();
         }
 
         private Game(SetupBoard playerOneSetup, SetupBoard playerTwoSetup) 
@@ -42,10 +40,9 @@ namespace Battleships.GameEngine
             Turn = Players.PlayerOne;
         }
 
-        internal Game(SetupBoard setupBoard, SetupBoard opponentsSetupBoard, IRandomCoordGenerator randomCoordGenerator, ISinkShipStrategy sinkShipStrategy) : this(setupBoard, opponentsSetupBoard)
+        internal Game(SetupBoard setupBoard, SetupBoard opponentsSetupBoard, IComputerStrategy computerStrategy) : this(setupBoard, opponentsSetupBoard)
         {
-            m_RandomCoordGenerator = randomCoordGenerator;
-            m_SinkShipStrategy = sinkShipStrategy;
+            m_ComputerStrategy = computerStrategy;
         }
 
         public FireResult Fire(GridSquare target)
@@ -70,10 +67,7 @@ namespace Battleships.GameEngine
 
             GridSquare target;
             do {
-                if (m_PlayerTwoUnsunkHits.Count == 0)
-                    target = m_RandomCoordGenerator.GetRandomCoord();
-                else 
-                    target = CalculateNextKnownShipTarget(); // If have hit but not yet sunk, zero in on same area
+                target = m_ComputerStrategy.NextTarget(m_PlayerTwoUnsunkHits, m_PlayerTwoShots);
             } 
             while (m_PlayerTwoShots[target.Point.X, target.Point.Y] != ShotState.NoShot);
 
@@ -102,15 +96,6 @@ namespace Battleships.GameEngine
             var haveWon = isSunk ? targetBoard.AllSunk : false;
 
             return new FireResult(target, isSunk, isSunk ? hitShip : null, haveWon);
-        }
-
-        private GridSquare CalculateNextKnownShipTarget()
-        {
-            if (m_PlayerTwoUnsunkHits.Count == 0)
-                throw new InvalidOperationException("Can only calculate known ship targets if already hit but ship not sunk.");
-
-            var target = m_SinkShipStrategy.NextTarget(m_PlayerTwoUnsunkHits, m_PlayerTwoShots);
-            return new GridSquare(target);
         }
     }
 
