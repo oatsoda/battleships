@@ -26,12 +26,10 @@ namespace Battleships.GameEngine.Strategy
 
             var potentials = new List<Point>();
             foreach (var hit in unsunkShipHits)
-            {
                 potentials.AddRange(AdjacentPoints(hit));
-            }
-
+            
             potentials.RemoveAll(p => unsunkShipHits.Contains(p) || previousShots[p.X, p.Y] != ShotState.NoShot);
-            return new GridSquare(potentials.First());
+            return PickBestPotential(potentials, unsunkShipHits, previousShots);
         }        
 
         private static IEnumerable<Point> AdjacentPoints(Point point)
@@ -56,8 +54,40 @@ namespace Battleships.GameEngine.Strategy
             {
                 target = m_RandomCoordGenerator.GetRandomCoord();
             }
-            while (previousShots[target.Point.X, target.Point.Y] != ShotState.NoShot);
+            while (previousShots[target.Point.X, target.Point.Y] != ShotState.NoShot ||
+                    AllAdjacentHaveBeenShotAt(target.Point, previousShots)
+                    );
             return target;
+        }
+
+        private static bool AllAdjacentHaveBeenShotAt(Point target, ShotState[,] previousShots)
+        {
+            foreach (var adj in AdjacentPoints(target))
+                if (previousShots[adj.X, adj.Y] == ShotState.NoShot)
+                    return false;            
+
+            return true;
+        }
+
+        private static GridSquare PickBestPotential(List<Point> potentials, List<Point> unsunkShipHits, ShotState[,] previousShots)
+        {
+            Point bestPoint;
+            if (potentials.Count > 1)
+            {
+                var x = unsunkShipHits.GroupBy(p => p.X).Select(g => new { g.Key, Count = g.Count() }).OrderByDescending(g => g.Count).First();
+                var y = unsunkShipHits.GroupBy(p => p.Y).Select(g => new { g.Key, Count = g.Count() }).OrderByDescending(g => g.Count).First();
+
+                if (x.Count > y.Count)
+                    bestPoint = potentials.OrderByDescending(p => p.X == x.Key).First();
+                else
+                    bestPoint = potentials.OrderByDescending(p => p.Y == y.Key).First();
+            }
+            else
+            {
+                bestPoint = potentials.First();
+            }
+
+            return new GridSquare(bestPoint);
         }
     }
 }

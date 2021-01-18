@@ -3,6 +3,7 @@ using Battleships.GameEngine.Strategy;
 using Moq;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Linq;
 using Xunit;
 
 namespace Battleships.GameEngine.Tests.Strategy
@@ -34,8 +35,8 @@ namespace Battleships.GameEngine.Tests.Strategy
         public void NextTargetDoesNotReturnATargetAlreadyShotAt()
         {
             // Given
-            m_Random = FixedRandom("F5", "G7").Object;
             var prevShots = PrevShots("F5");
+            m_Random = FixedRandom("F5", "G7").Object;
             var strategy = CreateStrategy();
 
             // When
@@ -44,6 +45,23 @@ namespace Battleships.GameEngine.Tests.Strategy
             // Then
             Assert.Equal("G7", r);
         }
+        
+        [Fact]
+        public void NextTargetDoesNotReturnATargetWhichIsASingleSquare()
+        {
+            // Given
+            var prevShots = PrevShots("B0", "A1", "B2", "C1");
+            m_Random = FixedRandom("B1", "F8").Object;
+            var strategy = CreateStrategy();
+
+            // When
+            var r = strategy.NextTarget(new List<Point>(), prevShots);
+
+            // Then
+            Assert.Equal("F8", r);
+        }
+
+        // TODO: Need to know what ships have been sunk as no point firing on gaps of X if ship is bigger.
 
         [Fact]
         public void NextTargetReturnsAdjacentSquareIfCurrentUnsunkHit()
@@ -62,14 +80,30 @@ namespace Battleships.GameEngine.Tests.Strategy
         public void NextTargetDoesNotReturnAnAdjacentSquareWhichHasAlreadyBeenShotAtIfCurrentUnsunkHit()
         {
             // Given
-            var strategy = CreateStrategy();
+            var unsunkHits = UnsunkHits("B1");
             var prevShots = PrevShots("B0", "B2", "A1");
+            var strategy = CreateStrategy();
 
             // When
-            var r = strategy.NextTarget(new List<Point> { new GridSquare("B1").Point }, prevShots);
+            var r = strategy.NextTarget(unsunkHits, prevShots);
 
             // Then
             Assert.Equal("C1", r);
+        }
+
+        [Fact]
+        public void NextTargetReturnsAnAdjacentSquareInSameAxisAsUnsunkHits()
+        {
+            // Given
+            var unsunkHits = UnsunkHits("B1", "B2");
+            var prevShots = PrevShots();
+            var strategy = CreateStrategy();
+
+            // When
+            var r = strategy.NextTarget(unsunkHits, prevShots);
+
+            // Then
+            Assert.Contains(r, new GridSquare[] { "B0", "B3" });
         }
 
         private ShipSeekingEfficientStrategy CreateStrategy()
@@ -97,6 +131,11 @@ namespace Battleships.GameEngine.Tests.Strategy
             foreach (var target in targets)
                 prevShots[target.Point.X, target.Point.Y] = ShotState.Miss;
             return prevShots;
+        }
+
+        private static List<Point> UnsunkHits(params GridSquare[] hits)
+        {
+            return hits.Select(g => g.Point).ToList();
         }
     }
 }
