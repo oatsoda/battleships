@@ -1,6 +1,6 @@
 {
-  "name": "Battleships.ProgWebAppBlazor",
-  "short_name": "Battleships.ProgWebAppBlazor",
+  "name": "Battleships",
+  "short_name": "Battleships",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#ffffff",
