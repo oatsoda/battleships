@@ -1,4 +1,5 @@
 ﻿@using Battleships.GameEngine
+@using System.Drawing
 
 @if (!IsCompleted)
 {
@@ -67,7 +68,8 @@
 
     private void InputTyped(ChangeEventArgs args)
     {
-        if (((string)args.Value).Length == 5)
+        var v = (string)args.Value;
+        if (v.Length == 5 || v.Length == 0)
             DisplayShips();
     }
 
@@ -90,5 +92,11 @@
     {
         IsCompleted = true;
         DisplayShips(true);
+    }
+
+    public void UseCoordinate(Point point)
+    {
+        SetupShips.UseCoord(new GridSquare(point));
+        DisplayShips();
     }
 }

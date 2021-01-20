@@ -26,7 +26,7 @@
                     @for (int x = 0; x < 10; x++)
                     {
                         var p = new Point(x, y);
-                        <GridCell Coord=@p State=@GetState(p) AllowSelection=@IsComputer OnCellClicked=@CellClicked />
+                        <GridCell Coord=@p State=@GetState(p) AllowSelection=@AllowSelection OnCellClicked=@CellClicked />
                     }
                 </tr>
             }
@@ -42,10 +42,15 @@
     public bool IsComputer { get; set; }
 
     [Parameter]
+    public bool IsSelection { get; set; }
+
+    [Parameter]
     public bool Visible { get; set; }
 
     [Parameter]
     public Action<Point> OnCellClicked { get; set; }
+
+    private bool AllowSelection => IsComputer || IsSelection;
 
     private const string colStyle = "col px-0 py-0 py-md-2";
 
@@ -58,9 +63,11 @@
 
     private void CellClicked(Point coord)
     {
-        if (!IsComputer)
+        if (!IsComputer && !IsSelection)
             return;
 
         OnCellClicked(coord);
     }
+
+    
 }

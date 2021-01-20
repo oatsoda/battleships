@@ -7,13 +7,13 @@
 
 <div class="row">
     <div class="col-md-6">
-        <GridBoard GridState=@PlayerGrid Visible=@true OnCellClicked="@(async (p) => await CellClicked(p))" />
+        <GridBoard GridState=@PlayerGrid Visible=@true IsSelection=@(!IsPlaying) OnCellClicked="@(async (p) => await PlayerCellSelected(p))" />
     </div>
     <div class="col-md-6">
         <GridBoard GridState=@ComputerGrid Visible=@IsPlaying IsComputer=@true OnCellClicked="@(async (p) => await CellClicked(p))" />
     </div>
 </div>
-<SetupBoardInput SetupBoard=@PlayerSetupBoard GridState=@PlayerGrid OnShipsChanged=@SetupBoardInputShipsChanged />
+<SetupBoardInput @ref=setupBoard SetupBoard=@PlayerSetupBoard GridState=@PlayerGrid OnShipsChanged=@SetupBoardInputShipsChanged />
 <PlayGame @ref=playGame PlayerGridState=@PlayerGrid ComputerGridState=@ComputerGrid Game=@Game OnGridStateChanged=@GridStatesChanged />
 
 
@@ -24,6 +24,9 @@
     private GridState ComputerGrid = new GridState();
     private Game Game;
     private bool IsPlaying;
+
+    private PlayGame playGame;
+    private SetupBoardInput setupBoard;
 
     private void SetupBoardInputShipsChanged(bool setupCompleted)
     {
@@ -36,7 +39,6 @@
         StateHasChanged();
     }
 
-    private PlayGame playGame;
 
     private void GridStatesChanged()
     {
@@ -46,6 +48,11 @@
     private async Task CellClicked(Point coord)
     {
         await playGame.CellSelectedForTurn(coord);
+    }
+
+    private async Task PlayerCellSelected(Point coord)
+    {
+        await Task.Run(() => setupBoard.UseCoordinate(coord));        
     }
 }
 

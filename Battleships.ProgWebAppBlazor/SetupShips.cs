@@ -15,31 +15,31 @@ namespace Battleships.ProgWebAppBlazor
         [RegularExpression(EXPRESSION, ErrorMessage = ERROR_MSG)]
         [ShipCoordsValid]
         [ShipValidInFleet]
-        public string ShipOne { get; set; }
+        public string ShipOne { get; set; } = string.Empty;
         
         [Required]
         [RegularExpression(EXPRESSION, ErrorMessage = ERROR_MSG)]
         [ShipCoordsValid]
         [ShipValidInFleet]
-        public string ShipTwo { get; set; }
+        public string ShipTwo { get; set; } = string.Empty;
         
         [Required]
         [RegularExpression(EXPRESSION, ErrorMessage = ERROR_MSG)]
         [ShipCoordsValid]
         [ShipValidInFleet]
-        public string ShipThree { get; set; }
+        public string ShipThree { get; set; } = string.Empty;
         
         [Required]
         [RegularExpression(EXPRESSION, ErrorMessage = ERROR_MSG)]
         [ShipCoordsValid]
         [ShipValidInFleet]
-        public string ShipFour { get; set; }
+        public string ShipFour { get; set; } = string.Empty;
         
         [Required]
         [RegularExpression(EXPRESSION, ErrorMessage = ERROR_MSG)]
         [ShipCoordsValid]
         [ShipValidInFleet]
-        public string ShipFive { get; set; }
+        public string ShipFive { get; set; } = string.Empty;
 
         public string GetShip(int num)
         {
@@ -66,20 +66,6 @@ namespace Battleships.ProgWebAppBlazor
                 case 5: return nameof(ShipFive);
                 default:
                     throw new ArgumentOutOfRangeException(nameof(num), "Should be 1-5");
-            }
-        }
-
-        public int GetShipNumber(string shipPropertyName)
-        {
-            switch (shipPropertyName)
-            {
-                case nameof(ShipOne): return 1;
-                case nameof(ShipTwo): return 2;
-                case nameof(ShipThree): return 3;
-                case nameof(ShipFour): return 4;
-                case nameof(ShipFive): return 5;
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(shipPropertyName), $"'{shipPropertyName}' is not a valid property name of {nameof(CellState)}");
             }
         }
 
@@ -113,6 +99,20 @@ namespace Battleships.ProgWebAppBlazor
 
                 yield return (propertyName, ship);
             }
+        }
+
+        public void UseCoord(GridSquare coord)
+        {
+            if (ShipOne.Length == 0 || ShipOne.Length == 2)
+                ShipOne = $"{ShipOne} {coord}".TrimStart();
+            else if (ShipTwo.Length == 0 || ShipTwo.Length == 2)
+                ShipTwo = $"{ShipTwo} {coord}".TrimStart();
+            else if (ShipThree.Length == 0 || ShipThree.Length == 2)
+                ShipThree = $"{ShipThree} {coord}".TrimStart();
+            else if (ShipFour.Length == 0 || ShipFour.Length == 2)
+                ShipFour = $"{ShipFour} {coord}".TrimStart();
+            else if (ShipFive.Length == 0 || ShipFive.Length == 2)
+                ShipFive = $"{ShipFive} {coord}".TrimStart();
         }
     }
 
